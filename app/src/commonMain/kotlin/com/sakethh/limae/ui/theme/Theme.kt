@@ -254,7 +254,7 @@ fun LimaeTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = LimaeTypography,
         content = content
     )
 }

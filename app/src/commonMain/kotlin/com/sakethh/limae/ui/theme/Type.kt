@@ -1,34 +1,56 @@
 package com.sakethh.limae.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
+import limae.app.generated.resources.Res
+import limae.app.generated.resources.googleSansFlex
+import limae.app.generated.resources.momo_signature
+import org.jetbrains.compose.resources.Font
 
-// Set of Material typography styles to start with
-val Typography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
+private val googleSansFlexFontFamily
+    @Composable get() = FontFamily(
+        Font(
+            Res.font.googleSansFlex,
+            weight = FontWeight.Normal,
+            variationSettings = FontVariation.Settings(
+                FontVariation.weight(460),
+                FontVariation.width(102f)
+            )
+        ),
+        Font(
+            Res.font.googleSansFlex,
+            weight = FontWeight.Medium,
+            variationSettings = FontVariation.Settings(
+                FontVariation.weight(560),
+                FontVariation.width(102f)
+            )
+        ),
+        Font(
+            Res.font.googleSansFlex,
+            weight = FontWeight.SemiBold,
+            variationSettings = FontVariation.Settings(
+                FontVariation.weight(660),
+                FontVariation.width(102f)
+            )
+        ),
     )
-    /* Other default text styles to override
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+
+private val momoSignatureFontFamily
+    @Composable get() = FontFamily(
+        Font(
+            resource = Res.font.momo_signature,
+            weight = FontWeight.Normal
+        )
     )
-    */
-)
+
+val LimaeTypography
+    @Composable get() = Typography(
+        titleLarge = TextStyle(fontFamily = googleSansFlexFontFamily, fontWeight = FontWeight.SemiBold),
+        titleMedium = TextStyle(fontFamily = googleSansFlexFontFamily, fontWeight = FontWeight.Medium),
+        titleSmall = TextStyle(fontFamily = googleSansFlexFontFamily, fontWeight = FontWeight.Normal),
+        labelSmall = TextStyle(fontFamily = momoSignatureFontFamily, fontWeight = FontWeight.Normal)
+    )

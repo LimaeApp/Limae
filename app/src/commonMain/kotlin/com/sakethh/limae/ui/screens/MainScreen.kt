@@ -13,6 +13,7 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.showHandOnHover
@@ -32,7 +34,7 @@ fun MainScreen(takeAction: (LimaeAction) -> Unit) {
     val topAppBarScrollBehaviour = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(topBar = {
         LargeTopAppBar(title = {
-            Text(text = "Limae")
+            Text(text = "Limae", style = MaterialTheme.typography.labelSmall, fontSize = 24.sp)
         }, scrollBehavior = topAppBarScrollBehaviour)
     }, floatingActionButton = {
         Row(
@@ -46,13 +48,13 @@ fun MainScreen(takeAction: (LimaeAction) -> Unit) {
                     contentDescription = "Search Icon button to open the search bar"
                 )
             }
-            IconButton(modifier = Modifier.showHandOnHover(),onClick = {}) {
+            IconButton(modifier = Modifier.showHandOnHover(), onClick = {}) {
                 Icon(
                     imageVector = Icons.Settings,
                     contentDescription = "Settings Icon button to navigate to the settings screen"
                 )
             }
-            FilledIconButton(modifier = Modifier.showHandOnHover(),onClick = {
+            FilledIconButton(modifier = Modifier.showHandOnHover(), onClick = {
                 takeAction(LimaeAction.Navigate(destination = NavRoute.Note))
             }) {
                 Icon(

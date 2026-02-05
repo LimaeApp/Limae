@@ -7,6 +7,113 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 object Icons {
+    val Close: ImageVector
+        get() {
+            if (_Close != null) {
+                return _Close!!
+            }
+            _Close = ImageVector.Builder(
+                name = "Close",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 960f,
+                viewportHeight = 960f
+            ).apply {
+                path(fill = SolidColor(Color(0xFFE3E3E3))) {
+                    moveToRelative(256f, 760f)
+                    lineToRelative(-56f, -56f)
+                    lineToRelative(224f, -224f)
+                    lineToRelative(-224f, -224f)
+                    lineToRelative(56f, -56f)
+                    lineToRelative(224f, 224f)
+                    lineToRelative(224f, -224f)
+                    lineToRelative(56f, 56f)
+                    lineToRelative(-224f, 224f)
+                    lineToRelative(224f, 224f)
+                    lineToRelative(-56f, 56f)
+                    lineToRelative(-224f, -224f)
+                    lineToRelative(-224f, 224f)
+                    close()
+                }
+            }.build()
+
+            return _Close!!
+        }
+
+    @Suppress("ObjectPropertyName")
+    private var _Close: ImageVector? = null
+    val EditNote: ImageVector
+        get() {
+            if (_EditNote != null) {
+                return _EditNote!!
+            }
+            _EditNote = ImageVector.Builder(
+                name = "EditNote",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 960f,
+                viewportHeight = 960f
+            ).apply {
+                path(fill = SolidColor(Color(0xFFE3E3E3))) {
+                    moveTo(160f, 560f)
+                    verticalLineToRelative(-80f)
+                    horizontalLineToRelative(280f)
+                    verticalLineToRelative(80f)
+                    lineTo(160f, 560f)
+                    close()
+                    moveTo(160f, 400f)
+                    verticalLineToRelative(-80f)
+                    horizontalLineToRelative(440f)
+                    verticalLineToRelative(80f)
+                    lineTo(160f, 400f)
+                    close()
+                    moveTo(160f, 240f)
+                    verticalLineToRelative(-80f)
+                    horizontalLineToRelative(440f)
+                    verticalLineToRelative(80f)
+                    lineTo(160f, 240f)
+                    close()
+                    moveTo(520f, 800f)
+                    verticalLineToRelative(-123f)
+                    lineToRelative(221f, -220f)
+                    quadToRelative(9f, -9f, 20f, -13f)
+                    reflectiveQuadToRelative(22f, -4f)
+                    quadToRelative(12f, 0f, 23f, 4.5f)
+                    reflectiveQuadToRelative(20f, 13.5f)
+                    lineToRelative(37f, 37f)
+                    quadToRelative(8f, 9f, 12.5f, 20f)
+                    reflectiveQuadToRelative(4.5f, 22f)
+                    quadToRelative(0f, 11f, -4f, 22.5f)
+                    reflectiveQuadTo(863f, 580f)
+                    lineTo(643f, 800f)
+                    lineTo(520f, 800f)
+                    close()
+                    moveTo(820f, 537f)
+                    lineTo(783f, 500f)
+                    lineTo(820f, 537f)
+                    close()
+                    moveTo(580f, 740f)
+                    horizontalLineToRelative(38f)
+                    lineToRelative(121f, -122f)
+                    lineToRelative(-18f, -19f)
+                    lineToRelative(-19f, -18f)
+                    lineToRelative(-122f, 121f)
+                    verticalLineToRelative(38f)
+                    close()
+                    moveTo(721f, 599f)
+                    lineTo(702f, 581f)
+                    lineTo(739f, 618f)
+                    lineTo(721f, 599f)
+                    close()
+                }
+            }.build()
+
+            return _EditNote!!
+        }
+
+    @Suppress("ObjectPropertyName")
+    private var _EditNote: ImageVector? = null
+
     val ArrowBack: ImageVector
         get() {
             if (_ArrowBack != null) {

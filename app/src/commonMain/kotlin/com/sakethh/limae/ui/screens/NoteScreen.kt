@@ -24,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,7 +58,11 @@ fun NoteScreen(
     )
     Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
         TopAppBar(scrollBehavior = topAppBarScrollBehaviour, title = {
-            Text(text = "Limae")
+            Text(
+                text = "Limae",
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 18.sp
+            )
         }, navigationIcon = {
             IconButton(modifier = Modifier.showHandOnHover(), onClick = {
                 takeAction(LimaeAction.NavigateBack)
@@ -83,16 +86,14 @@ fun NoteScreen(
                             text = "Title",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleMedium
                         )
                     },
                     value = title,
                     onValueChange = {
                         title = it
                     },
-                    textStyle = TextStyle(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
+                    textStyle = MaterialTheme.typography.titleMedium.copy(fontSize = 24.sp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = textFieldColors
                 )
@@ -103,16 +104,15 @@ fun NoteScreen(
                         Text(
                             text = "Content",
                             fontSize = 18.sp,
-                            fontWeight = FontWeight.Normal,
+                            style = MaterialTheme.typography.titleSmall
                         )
                     },
                     value = content,
                     onValueChange = {
                         content = it
                     },
-                    textStyle = TextStyle(
+                    textStyle = MaterialTheme.typography.titleSmall.copy(
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Normal,
                     ),
                     modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 250.dp),
                     colors = textFieldColors
@@ -123,7 +123,8 @@ fun NoteScreen(
                     text = "Last saved on $lastSavedOn",
                     modifier = Modifier.padding(start = 15.dp)
                         .imePadding(),
-                    color = MaterialTheme.colorScheme.secondary
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.titleSmall
                 )
             }
         }

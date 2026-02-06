@@ -7,6 +7,116 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 object Icons {
+
+    val ListAltAdd: ImageVector
+        get() {
+            if (_ListAltAdd != null) {
+                return _ListAltAdd!!
+            }
+            _ListAltAdd = ImageVector.Builder(
+                name = "ListAltAdd",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 960f,
+                viewportHeight = 960f
+            ).apply {
+                path(fill = SolidColor(Color(0xFFE3E3E3))) {
+                    moveTo(680f, 920f)
+                    verticalLineToRelative(-120f)
+                    lineTo(560f, 800f)
+                    verticalLineToRelative(-80f)
+                    horizontalLineToRelative(120f)
+                    verticalLineToRelative(-120f)
+                    horizontalLineToRelative(80f)
+                    verticalLineToRelative(120f)
+                    horizontalLineToRelative(120f)
+                    verticalLineToRelative(80f)
+                    lineTo(760f, 800f)
+                    verticalLineToRelative(120f)
+                    horizontalLineToRelative(-80f)
+                    close()
+                    moveTo(200f, 760f)
+                    verticalLineToRelative(-560f)
+                    verticalLineToRelative(560f)
+                    close()
+                    moveTo(200f, 840f)
+                    quadToRelative(-33f, 0f, -56.5f, -23.5f)
+                    reflectiveQuadTo(120f, 760f)
+                    verticalLineToRelative(-560f)
+                    quadToRelative(0f, -33f, 23.5f, -56.5f)
+                    reflectiveQuadTo(200f, 120f)
+                    horizontalLineToRelative(560f)
+                    quadToRelative(33f, 0f, 56.5f, 23.5f)
+                    reflectiveQuadTo(840f, 200f)
+                    verticalLineToRelative(353f)
+                    quadToRelative(-18f, -11f, -38f, -18f)
+                    reflectiveQuadToRelative(-42f, -11f)
+                    verticalLineToRelative(-324f)
+                    lineTo(200f, 200f)
+                    verticalLineToRelative(560f)
+                    horizontalLineToRelative(280f)
+                    quadToRelative(0f, 21f, 3f, 41f)
+                    reflectiveQuadToRelative(10f, 39f)
+                    lineTo(200f, 840f)
+                    close()
+                    moveTo(348.5f, 668.5f)
+                    quadTo(360f, 657f, 360f, 640f)
+                    reflectiveQuadToRelative(-11.5f, -28.5f)
+                    quadTo(337f, 600f, 320f, 600f)
+                    reflectiveQuadToRelative(-28.5f, 11.5f)
+                    quadTo(280f, 623f, 280f, 640f)
+                    reflectiveQuadToRelative(11.5f, 28.5f)
+                    quadTo(303f, 680f, 320f, 680f)
+                    reflectiveQuadToRelative(28.5f, -11.5f)
+                    close()
+                    moveTo(348.5f, 508.5f)
+                    quadTo(360f, 497f, 360f, 480f)
+                    reflectiveQuadToRelative(-11.5f, -28.5f)
+                    quadTo(337f, 440f, 320f, 440f)
+                    reflectiveQuadToRelative(-28.5f, 11.5f)
+                    quadTo(280f, 463f, 280f, 480f)
+                    reflectiveQuadToRelative(11.5f, 28.5f)
+                    quadTo(303f, 520f, 320f, 520f)
+                    reflectiveQuadToRelative(28.5f, -11.5f)
+                    close()
+                    moveTo(348.5f, 348.5f)
+                    quadTo(360f, 337f, 360f, 320f)
+                    reflectiveQuadToRelative(-11.5f, -28.5f)
+                    quadTo(337f, 280f, 320f, 280f)
+                    reflectiveQuadToRelative(-28.5f, 11.5f)
+                    quadTo(280f, 303f, 280f, 320f)
+                    reflectiveQuadToRelative(11.5f, 28.5f)
+                    quadTo(303f, 360f, 320f, 360f)
+                    reflectiveQuadToRelative(28.5f, -11.5f)
+                    close()
+                    moveTo(440f, 520f)
+                    horizontalLineToRelative(240f)
+                    verticalLineToRelative(-80f)
+                    lineTo(440f, 440f)
+                    verticalLineToRelative(80f)
+                    close()
+                    moveTo(440f, 360f)
+                    horizontalLineToRelative(240f)
+                    verticalLineToRelative(-80f)
+                    lineTo(440f, 280f)
+                    verticalLineToRelative(80f)
+                    close()
+                    moveTo(440f, 680f)
+                    horizontalLineToRelative(54f)
+                    quadToRelative(8f, -23f, 20f, -43f)
+                    reflectiveQuadToRelative(28f, -37f)
+                    lineTo(440f, 600f)
+                    verticalLineToRelative(80f)
+                    close()
+                }
+            }.build()
+
+            return _ListAltAdd!!
+        }
+
+    @Suppress("ObjectPropertyName")
+    private var _ListAltAdd: ImageVector? = null
+
     val Close: ImageVector
         get() {
             if (_Close != null) {

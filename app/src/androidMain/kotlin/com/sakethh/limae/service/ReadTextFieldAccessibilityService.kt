@@ -2,6 +2,7 @@ package com.sakethh.limae.service
 
 import android.accessibilityservice.AccessibilityService
 import android.graphics.PixelFormat
+import android.os.Bundle
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
@@ -14,13 +15,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
-import com.sakethh.limae.LimaeBottomSheet
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.sakethh.limae.AccessibilitySuggestionsSheet
+import com.sakethh.limae.HarperEngine
 import com.sakethh.limae.OverlayLifecycleOwner
+import com.sakethh.limae.data.repository.SuggestionCheckRepoImpl
+import com.sakethh.limae.domain.repository.SuggestionCheckRepo
+import com.sakethh.limae.model.LimaeSuggestionNote
 import com.sakethh.limae.ui.Icons
+import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.theme.LimaeTheme
+import com.sakethh.limae.utils.onFailure
+import com.sakethh.limae.utils.onSuccess
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 class ReadTextFieldAccessibilityService : AccessibilityService() {
@@ -46,18 +64,47 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
     private var isExpanded by mutableStateOf(false)
     private var showUI by mutableStateOf(false)
 
+    private val suggestionCheckRepo: SuggestionCheckRepo = SuggestionCheckRepoImpl(HarperEngine)
+    private var focusedTextFieldText by mutableStateOf("")
+
+    private val _suggestionsResult =
+        MutableStateFlow<ItemState<PersistentList<LimaeSuggestionNote>>>(
+            ItemState(
+                isError = false,
+                errorMessage = null,
+                isLoading = false,
+                data = persistentListOf()
+            )
+        )
+
+    private val suggestionsResult = _suggestionsResult.asStateFlow()
+
+    private var currentFocusedNode: AccessibilityNodeInfo? = null
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate() {
         super.onCreate()
+
+        overlayLifecycleOwner.lifecycleScope.launch {
+            snapshotFlow {
+                focusedTextFieldText
+            }.debounce(250).collectLatest {
+                suggestionCheckRepo.viaHarper(it).onSuccess(_suggestionsResult::onSuccess)
+                    .onFailure(_suggestionsResult::onFailure)
+                println("limae_data:${_suggestionsResult.value.data}")
+            }
+        }
+
         overlayLifecycleOwner.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         composeView = ComposeView(applicationContext).apply {
             overlayLifecycleOwner.attachTo(this)
             setContent {
+                val suggestions by suggestionsResult.collectAsStateWithLifecycle()
                 LimaeTheme {
                     AnimatedVisibility(showUI) {
                         if (isExpanded) {
-                            LimaeBottomSheet(
+                            AccessibilitySuggestionsSheet(
                                 onDismissRequest = {
                                     windowParams.gravity = Gravity.TOP or Gravity.START
                                     windowParams.x = lastX
@@ -65,6 +112,30 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
                                     windowParams.width = WindowManager.LayoutParams.WRAP_CONTENT
                                     windowManager.updateViewLayout(composeView, windowParams)
                                     isExpanded = false
+                                },
+                                suggestions = suggestions.data,
+                                onAddToDictionary = {},
+                                onSuggestionAccept = { suggestionIndex, suggestion ->
+                                    val limaeSuggestion = suggestions.data[suggestionIndex]
+                                    val replacementText = limaeSuggestion
+                                        .suggestions[suggestion].substringAfter(
+                                        "“"
+                                    ).substringBeforeLast("”")
+                                    val replacedText =
+                                        currentFocusedNode?.text?.replaceRange(
+                                            startIndex = limaeSuggestion.startIndex,
+                                            endIndex = limaeSuggestion.endIndex,
+                                            replacement = replacementText
+                                        )
+                                    currentFocusedNode?.performAction(
+                                        AccessibilityNodeInfo.ACTION_SET_TEXT,
+                                        Bundle().apply {
+                                            putCharSequence(
+                                                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                                                replacedText
+                                            )
+                                        }
+                                    )
                                 },
                             )
                         } else {
@@ -122,8 +193,12 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
         }
 
         showUI = focusedNode != null && focusedNode.isEditable && !focusedNode.isPassword
-    }
 
+        if (showUI) {
+            focusedTextFieldText = focusedNode?.text?.toString() ?: ""
+        }
+        currentFocusedNode = focusedNode
+    }
 
 
     override fun onServiceConnected() {

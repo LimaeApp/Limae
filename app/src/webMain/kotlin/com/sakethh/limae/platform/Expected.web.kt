@@ -1,6 +1,7 @@
 package com.sakethh.limae.platform
 
-import com.sakethh.limae.model.LimaeNote
+import com.sakethh.limae.model.HarperEngine
+import com.sakethh.limae.model.LimaeSuggestionNote
 import kotlinx.serialization.json.Json
 
 @JsModule("harper-binding")
@@ -8,8 +9,8 @@ external object RustWasmBridge {
     fun lint(text: String): String
 }
 
-actual object HarperEngine {
-    actual fun checkText(text: String): List<LimaeNote> {
+actual object HarperEngine: HarperEngine {
+    actual override fun checkText(text: String): List<LimaeSuggestionNote> {
         return try {
             val json = RustWasmBridge.lint(text)
             Json.decodeFromString(json)
@@ -19,3 +20,5 @@ actual object HarperEngine {
         }
     }
 }
+
+actual val platform: Platform = Platform.Web

@@ -24,7 +24,7 @@ fun Limae() {
                 }
             }
         }
-        NavHost(navController = navController, startDestination = NavRoute.Note) {
+        NavHost(navController = navController, startDestination = NavRoute.Main) {
             composable<NavRoute.Main> {
                 MainScreen(takeAction = {
                     takeAction(it)

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -21,14 +20,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sakethh.limae.model.LimaeNote
+import com.sakethh.limae.model.LimaeSuggestionNote
+import com.sakethh.limae.model.LintKind
 import com.sakethh.limae.ui.Icons
 
 @Composable
-fun SuggestionNote(limaeNote: LimaeNote) {
+fun SuggestionNote(
+    limaeSuggestionNote: LimaeSuggestionNote,
+    onAddToDictionary: () -> Unit, onSuggestionAccept: (Int) -> Unit
+) {
     Card(
         modifier = Modifier.padding(
             end = 15.dp,
@@ -40,21 +42,21 @@ fun SuggestionNote(limaeNote: LimaeNote) {
     ) {
         Column {
             Text(
-                text = limaeNote.kind.name,
+                text = limaeSuggestionNote.kind.name,
                 style = MaterialTheme.typography.titleMedium,
                 fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.clip(
+                modifier = Modifier/*.clip(
                     RoundedCornerShape(
                         bottomStart = 25.dp,
                         bottomEnd = 25.dp
                     )
-                ).background(MaterialTheme.colorScheme.primaryContainer)
+                )*/.background(MaterialTheme.colorScheme.primaryContainer)
                     .fillMaxWidth().padding(15.dp)
             )
             Spacer(modifier = Modifier.height(7.5.dp))
             Text(
-                text = limaeNote.message,
+                text = limaeSuggestionNote.message,
                 style = MaterialTheme.typography.titleMedium,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(
@@ -70,13 +72,13 @@ fun SuggestionNote(limaeNote: LimaeNote) {
                 ),
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                limaeNote.suggestions.forEach {
-                    key(it) {
+                limaeSuggestionNote.suggestions.forEachIndexed { index, suggestion ->
+                    key(suggestion + index) {
                         Button(modifier = Modifier.showHandOnHover(), onClick = {
-
+                            onSuggestionAccept(index)
                         }) {
                             Text(
-                                text = it,
+                                text = suggestion,
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
@@ -84,27 +86,30 @@ fun SuggestionNote(limaeNote: LimaeNote) {
                 }
             }
             Spacer(modifier = Modifier.height(7.5.dp))
-            Row(
-                modifier = Modifier.clip(
+            if (limaeSuggestionNote.kind == LintKind.Spelling) {
+                Row(
+                    modifier = Modifier/*.clip(
                     RoundedCornerShape(
                         topStart = 25.dp,
                         topEnd = 25.dp
                     )
-                ).showHandOnHover().clickable(onClick = {
-
-                }).background(MaterialTheme.colorScheme.secondaryContainer)
-                    .fillMaxWidth().padding(15.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.AddNotes,
-                    contentDescription = "Add this suggestion to dictionary to not include in any suggestions."
-                )
-                Spacer(Modifier.width(5.dp))
-                Text(
-                    text = "Add to dictionary",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                )*/.showHandOnHover().clickable(onClick = onAddToDictionary)
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .fillMaxWidth().padding(15.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.ListAltAdd,
+                        contentDescription = "Add this suggestion to dictionary to not include in any suggestions.",
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(
+                        text = "Add to dictionary",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             }
         }
     }

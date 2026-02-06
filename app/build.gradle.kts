@@ -25,7 +25,9 @@ kotlin {
         browser()
         binaries.executable()
     }
-
+    sourceSets.all {
+        languageSettings.enableLanguageFeature("ExplicitBackingFields")
+    }
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
@@ -44,7 +46,7 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.compose.components.resources)
             implementation(libs.kotlinx.collections.immutable)
-            }
+        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }

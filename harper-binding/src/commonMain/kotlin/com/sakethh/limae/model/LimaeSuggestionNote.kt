@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @Stable
-data class LimaeNote(
+data class LimaeSuggestionNote(
     val startIndex: Int = -41545,
     val endIndex: Int = -45645,
     val message: String = "",

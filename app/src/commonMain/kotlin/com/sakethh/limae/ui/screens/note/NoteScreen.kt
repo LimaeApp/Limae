@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -38,8 +38,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.sakethh.limae.data.repository.SuggestionCheckRepoImpl
-import com.sakethh.limae.model.LimaeNote
+import com.sakethh.limae.model.LimaeSuggestionNote
 import com.sakethh.limae.platform.HarperEngine
+import com.sakethh.limae.platform.Platform
+import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.SuggestionNote
@@ -60,7 +62,8 @@ fun NoteScreen(
                 suggestionCheckRepo = SuggestionCheckRepoImpl(
                     harperEngine = HarperEngine
                 ), title = title,
-                content = content
+                content = content,
+                registerListeningToSuggestions = platform != Platform.AndroidMobile
             )
         }
     })
@@ -94,7 +97,9 @@ fun NoteScreen(
                     )
                 }
             })
-            HorizontalDivider()
+            if (platform != Platform.AndroidMobile) {
+                HorizontalDivider()
+            }
         }
     }) { paddingValues ->
         Row(
@@ -104,7 +109,7 @@ fun NoteScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth(0.65f)
+                    .fillMaxWidth(if (platform == Platform.AndroidMobile) 1f else 0.65f)
             ) {
                 item {
                     TextField(
@@ -155,46 +160,89 @@ fun NoteScreen(
                     )
                 }
             }
+            if (platform == Platform.AndroidMobile) return@Row
+
             VerticalDivider(
                 modifier = Modifier.fillMaxHeight().padding(start = 7.5.dp)
             )
-            SuggestionsList(suggestions.data)
+            SuggestionsList(
+                suggestions = suggestions.data,
+                onAddToDictionary = {},
+                onSuggestionAccept = { limaeNotesIndex, suggestionNoteIndex ->
+                    noteScreenVM.onAction(
+                        NoteScreenAction.OnSuggestionAccept(
+                            limaeNotesIndex,
+                            suggestionNoteIndex
+                        )
+                    )
+                }
+            )
         }
     }
 }
 
+typealias LimaeNotesIndex = Int
+typealias SuggestionNoteIndex = Int
+
 @Composable
-fun SuggestionsList(suggestions: PersistentList<LimaeNote>) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        stickyHeader {
-            Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
-                Text(
-                    text = "Suggestions",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontSize = 24.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 15.dp, top = 15.dp)
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(top = 15.dp, bottom = 5.dp).fillMaxWidth(),
-                )
+fun SuggestionsList(
+    suggestions: PersistentList<LimaeSuggestionNote>,
+    modifier: Modifier = Modifier.fillMaxSize(),
+    showStickyHeader: Boolean = true,
+    onAddToDictionary: (LimaeSuggestionNote) -> Unit,
+    onSuggestionAccept: (LimaeNotesIndex, SuggestionNoteIndex) -> Unit
+) {
+    LazyColumn(modifier = modifier) {
+        if (showStickyHeader) {
+            stickyHeader {
+                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+                    Text(
+                        text = "Suggestions",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontSize = 24.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 15.dp, top = 15.dp)
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(top = 15.dp, bottom = 5.dp).fillMaxWidth(),
+                    )
+                }
             }
+        }
+        item {
+            Spacer(
+                modifier = Modifier.height(
+                    if (platform == Platform.AndroidMobile) 15.dp else 0.dp
+                )
+            )
         }
         if (suggestions.isEmpty()) {
             item {
                 Text(
                     modifier = Modifier.padding(15.dp),
-                    text = "It's all empty here.",
+                    text = "No suggestions yet.",
                     style = MaterialTheme.typography.titleMedium,
-                    fontSize = 32.sp
+                    fontSize = 32.sp,
                 )
             }
         }
-        items(suggestions) {
-            SuggestionNote(it)
+        itemsIndexed(suggestions) { index, suggestion ->
+            SuggestionNote(
+                limaeSuggestionNote = suggestion,
+                onAddToDictionary = {
+                    onAddToDictionary(suggestion)
+                },
+                onSuggestionAccept = {
+                    onSuggestionAccept(index, it)
+                },
+            )
         }
         item {
-            Spacer(modifier = Modifier.height(250.dp))
+            Spacer(
+                modifier = Modifier.height(
+                    if (platform == Platform.AndroidMobile) 15.dp else 250.dp
+                )
+            )
         }
     }
 }

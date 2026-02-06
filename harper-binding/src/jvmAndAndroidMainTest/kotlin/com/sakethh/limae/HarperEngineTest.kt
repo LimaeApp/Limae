@@ -6,7 +6,7 @@ import kotlin.test.assertTrue
 class HarperEngineTest {
 
     @Test
-    fun testBindingWithGrammarError() {
+    fun testBindingWithError() {
         val text = "Since your data never leaves your device, you don't ned too worry aout us selling it or using it to train large language models."
 
         val errors = HarperEngine.checkText(text)

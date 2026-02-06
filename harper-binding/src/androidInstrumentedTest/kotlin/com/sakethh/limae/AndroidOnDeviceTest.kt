@@ -11,7 +11,7 @@ class AndroidOnDeviceTest {
     fun testHarperEngine() {
         HarperEngineTest().apply {
             testBindingWithCleanText()
-            testBindingWithGrammarError()
+            testBindingWithError()
         }
     }
 

@@ -43,7 +43,8 @@ kotlin {
             implementation(project(":harper-binding"))
             implementation(libs.navigation.compose)
             implementation(libs.compose.components.resources)
-        }
+            implementation(libs.kotlinx.collections.immutable)
+            }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
@@ -106,8 +107,18 @@ compose.desktop {
         }
 
         val rustTarget = "x86_64-unknown-linux-gnu"
-        val rustBuildDir = project(":harper-binding").projectDir.resolve("target/$rustTarget/release")
+        val rustBuildDir =
+            project(":harper-binding").projectDir.resolve("target/$rustTarget/release")
 
         jvmArgs += "-Djava.library.path=${rustBuildDir.absolutePath}"
+    }
+}
+
+tasks.withType<JavaExec>().configureEach {
+    if (name == "hotRunJvm") {
+        val rustTarget = "x86_64-unknown-linux-gnu"
+        val rustBuildDir =
+            project(":harper-binding").projectDir.resolve("target/$rustTarget/release")
+        systemProperty("java.library.path", rustBuildDir.absolutePath)
     }
 }

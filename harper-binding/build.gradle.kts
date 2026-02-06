@@ -24,6 +24,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(libs.kotlinx.serialization.json)
+                compileOnly("androidx.compose.runtime:runtime-annotation:1.9.0")
             }
         }
 

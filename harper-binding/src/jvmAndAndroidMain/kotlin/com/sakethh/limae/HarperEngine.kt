@@ -1,4 +1,5 @@
 package com.sakethh.limae
+import com.sakethh.limae.model.LimaeNote
 import kotlinx.serialization.json.Json
 
 object HarperEngine {
@@ -8,12 +9,12 @@ object HarperEngine {
 
     private external fun lintNative(text: String): String
 
-    fun checkText(text: String): List<LimaeError> {
+    fun checkText(text: String): List<LimaeNote> {
         if (text.isBlank()) return emptyList()
 
         val jsonResult = lintNative(text)
         return try {
-            Json.decodeFromString<List<LimaeError>>(jsonResult)
+            Json.decodeFromString<List<LimaeNote>>(jsonResult)
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()

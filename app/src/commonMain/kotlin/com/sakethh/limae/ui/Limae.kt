@@ -10,7 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sakethh.limae.ui.navigation.NavRoute
 import com.sakethh.limae.ui.screens.MainScreen
-import com.sakethh.limae.ui.screens.NoteScreen
+import com.sakethh.limae.ui.screens.note.NoteScreen
 
 @Composable
 fun Limae() {
@@ -24,7 +24,7 @@ fun Limae() {
                 }
             }
         }
-        NavHost(navController = navController, startDestination = NavRoute.Main) {
+        NavHost(navController = navController, startDestination = NavRoute.Note) {
             composable<NavRoute.Main> {
                 MainScreen(takeAction = {
                     takeAction(it)

@@ -64,7 +64,7 @@ fn lint_text(input_text: &str) -> String {
 
 #[cfg(not(target_arch = "wasm32"))]
 #[no_mangle]
-pub extern "system" fn Java_com_sakethh_limae_HarperEngine_lintNative(
+pub extern "system" fn Java_com_sakethh_limae_HarperJVMEngine_lintNative(
     mut env: JNIEnv,
     _class: JClass,
     input: JString,

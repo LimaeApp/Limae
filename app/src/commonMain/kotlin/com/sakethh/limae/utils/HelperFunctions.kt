@@ -1,6 +1,10 @@
 package com.sakethh.limae.utils
 
+import com.sakethh.limae.domain.SuggestionEngine
+import com.sakethh.limae.domain.model.LimaeSuggestion
+import com.sakethh.limae.domain.model.LimaeSuggestionBundle
 import com.sakethh.limae.ui.common.ItemState
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -20,7 +24,9 @@ fun <T> MutableStateFlow<ItemState<T>>.onFailure(throwable: Throwable) {
     }
 }
 
-fun <T> MutableStateFlow<ItemState<T>>.onSuccess(data: T) {
+//  MutableStateFlow
+
+fun <T: PersistentList<LimaeSuggestionBundle>>  MutableStateFlow<ItemState<T>>.onSuccess(data: T) {
     update {
         it.copy(isLoading = false, isError = false, errorMessage = null, data = data)
     }

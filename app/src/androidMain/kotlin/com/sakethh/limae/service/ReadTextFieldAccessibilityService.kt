@@ -22,11 +22,13 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.sakethh.limae.AccessibilitySuggestionsSheet
-import com.sakethh.limae.HarperEngine
 import com.sakethh.limae.OverlayLifecycleOwner
 import com.sakethh.limae.data.repository.SuggestionCheckRepoImpl
+import com.sakethh.limae.domain.SuggestionEngine
+import com.sakethh.limae.domain.model.LimaeSuggestionBundle
 import com.sakethh.limae.domain.repository.SuggestionCheckRepo
-import com.sakethh.limae.model.LimaeSuggestionNote
+import com.sakethh.limae.platform.HarperEngine
+import com.sakethh.limae.platform.LanguageToolEngine
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.theme.LimaeTheme
@@ -64,11 +66,14 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
     private var isExpanded by mutableStateOf(false)
     private var showUI by mutableStateOf(false)
 
-    private val suggestionCheckRepo: SuggestionCheckRepo = SuggestionCheckRepoImpl(HarperEngine)
+    private val suggestionCheckRepo: SuggestionCheckRepo = SuggestionCheckRepoImpl(
+        harperEngine = HarperEngine,
+        languageToolEngine = LanguageToolEngine
+    )
     private var focusedTextFieldText by mutableStateOf("")
 
     private val _suggestionsResult =
-        MutableStateFlow<ItemState<PersistentList<LimaeSuggestionNote>>>(
+        MutableStateFlow<ItemState<PersistentList<LimaeSuggestionBundle>>>(
             ItemState(
                 isError = false,
                 errorMessage = null,
@@ -88,10 +93,11 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
         overlayLifecycleOwner.lifecycleScope.launch {
             snapshotFlow {
                 focusedTextFieldText
-            }.debounce(250).collectLatest {
-                suggestionCheckRepo.viaHarper(it).onSuccess(_suggestionsResult::onSuccess)
+            }.debounce(250).collectLatest { inputText ->
+                suggestionCheckRepo.getSuggestions(inputText)
+                    .onSuccess(_suggestionsResult::onSuccess)
                     .onFailure(_suggestionsResult::onFailure)
-                println("limae_data:${_suggestionsResult.value.data}")
+                println("limae_data:${_suggestionsResult.value.data} for input: $inputText")
             }
         }
 
@@ -116,15 +122,24 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
                                 suggestions = suggestions.data,
                                 onAddToDictionary = {},
                                 onSuggestionAccept = { suggestionIndex, suggestion ->
-                                    val limaeSuggestion = suggestions.data[suggestionIndex]
+                                    val (limaeSuggestion, suggestionEngine) = suggestions.data[suggestionIndex]
+
+                                    val startIndex = limaeSuggestion.startIndex
+                                    val endIndex = limaeSuggestion.endIndex
+
                                     val replacementText = limaeSuggestion
-                                        .suggestions[suggestion].substringAfter(
-                                        "“"
-                                    ).substringBeforeLast("”")
+                                        .suggestions[suggestion].run {
+                                        if (suggestionEngine == SuggestionEngine.Harper) {
+                                            this.substringAfter(
+                                                "“"
+                                            ).substringBeforeLast("”")
+                                        } else this
+                                    }
+
                                     val replacedText =
                                         currentFocusedNode?.text?.replaceRange(
-                                            startIndex = limaeSuggestion.startIndex,
-                                            endIndex = limaeSuggestion.endIndex,
+                                            startIndex = startIndex,
+                                            endIndex = endIndex,
                                             replacement = replacementText
                                         )
                                     currentFocusedNode?.performAction(

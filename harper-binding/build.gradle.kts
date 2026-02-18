@@ -154,7 +154,7 @@ tasks.matching { it.name == "preBuild" }.configureEach {
     dependsOn("cargoBuildAndroid")
 }
 
-tasks.matching { it.name == "processJvmResources" }.configureEach {
+tasks.matching { it.name == "processJvmResources" || it.name == "jvmProcessResources" }.configureEach {
     dependsOn("cargoBuildDesktop")
 }
 

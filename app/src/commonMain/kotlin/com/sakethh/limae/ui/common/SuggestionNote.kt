@@ -22,13 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sakethh.limae.model.LimaeSuggestionNote
+import com.sakethh.limae.domain.model.LimaeSuggestionBundle
 import com.sakethh.limae.model.LintKind
 import com.sakethh.limae.ui.Icons
 
 @Composable
 fun SuggestionNote(
-    limaeSuggestionNote: LimaeSuggestionNote,
+    limaeSuggestionBundle: LimaeSuggestionBundle,
     onAddToDictionary: () -> Unit, onSuggestionAccept: (Int) -> Unit
 ) {
     Card(
@@ -41,22 +41,26 @@ fun SuggestionNote(
             .fillMaxWidth()
     ) {
         Column {
-            Text(
-                text = limaeSuggestionNote.kind.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier/*.clip(
-                    RoundedCornerShape(
-                        bottomStart = 25.dp,
-                        bottomEnd = 25.dp
-                    )
-                )*/.background(MaterialTheme.colorScheme.primaryContainer)
+            Column(
+                modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
                     .fillMaxWidth().padding(15.dp)
-            )
+            ) {
+                Text(
+                    text = limaeSuggestionBundle.suggestion.kind.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "via "+limaeSuggestionBundle.engine.name,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.75f),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = 14.sp,
+                )
+            }
             Spacer(modifier = Modifier.height(7.5.dp))
             Text(
-                text = limaeSuggestionNote.message,
+                text = limaeSuggestionBundle.suggestion.message,
                 style = MaterialTheme.typography.titleMedium,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(
@@ -70,9 +74,10 @@ fun SuggestionNote(
                     start = 15.dp,
                     end = 15.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                limaeSuggestionNote.suggestions.forEachIndexed { index, suggestion ->
+                limaeSuggestionBundle.suggestion.suggestions.forEachIndexed { index, suggestion ->
                     key(suggestion + index) {
                         Button(modifier = Modifier.showHandOnHover(), onClick = {
                             onSuggestionAccept(index)
@@ -86,14 +91,9 @@ fun SuggestionNote(
                 }
             }
             Spacer(modifier = Modifier.height(7.5.dp))
-            if (limaeSuggestionNote.kind == LintKind.Spelling) {
+            if (limaeSuggestionBundle.suggestion.kind == LintKind.Spelling) {
                 Row(
-                    modifier = Modifier/*.clip(
-                    RoundedCornerShape(
-                        topStart = 25.dp,
-                        topEnd = 25.dp
-                    )
-                )*/.showHandOnHover().clickable(onClick = onAddToDictionary)
+                    modifier = Modifier.showHandOnHover().clickable(onClick = onAddToDictionary)
                         .background(MaterialTheme.colorScheme.secondaryContainer)
                         .fillMaxWidth().padding(15.dp),
                     verticalAlignment = Alignment.CenterVertically

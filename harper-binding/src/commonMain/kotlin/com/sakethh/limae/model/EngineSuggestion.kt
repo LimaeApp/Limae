@@ -5,10 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @Stable
-data class LimaeSuggestionNote(
-    val startIndex: Int = -41545,
-    val endIndex: Int = -45645,
-    val message: String = "",
+data class EngineSuggestion(
+    val startIndex: Int? = null,
+    val endIndex: Int? = null,
+    val message: String? = null,
     val suggestions: List<String> = emptyList(),
     val kind: LintKind = LintKind.LimaeNull
 )

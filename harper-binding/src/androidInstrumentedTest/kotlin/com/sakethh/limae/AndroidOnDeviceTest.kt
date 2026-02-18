@@ -9,7 +9,7 @@ class AndroidOnDeviceTest {
 
     @Test
     fun testHarperEngine() {
-        HarperEngineTest().apply {
+        HarperJVMEngineTest().apply {
             testBindingWithCleanText()
             testBindingWithError()
         }

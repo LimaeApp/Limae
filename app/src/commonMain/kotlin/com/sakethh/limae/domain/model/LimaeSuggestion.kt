@@ -1,0 +1,15 @@
+package com.sakethh.limae.domain.model
+
+import androidx.compose.runtime.Stable
+import com.sakethh.limae.model.LintKind
+import kotlinx.serialization.Serializable
+
+@Serializable
+@Stable
+data class LimaeSuggestion(
+    val startIndex: Int,
+    val endIndex: Int,
+    val message: String,
+    val suggestions: List<String> = emptyList(),
+    val kind: LintKind = LintKind.LimaeNull
+)

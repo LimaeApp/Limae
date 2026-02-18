@@ -20,7 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sakethh.limae.model.LimaeSuggestionNote
+import com.sakethh.limae.domain.SuggestionEngine
+import com.sakethh.limae.domain.model.LimaeSuggestion
+import com.sakethh.limae.domain.model.LimaeSuggestionBundle
+import com.sakethh.limae.model.EngineSuggestion
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.screens.note.LimaeNotesIndex
 import com.sakethh.limae.ui.screens.note.SuggestionNoteIndex
@@ -34,8 +37,8 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun AccessibilitySuggestionsSheet(
     onDismissRequest: () -> Unit,
-    suggestions: PersistentList<LimaeSuggestionNote>,
-    onAddToDictionary: (LimaeSuggestionNote) -> Unit,
+    suggestions: PersistentList<LimaeSuggestionBundle>,
+    onAddToDictionary: (LimaeSuggestionBundle) -> Unit,
     onSuggestionAccept: (LimaeNotesIndex, SuggestionNoteIndex) -> Unit
 ) {
     Surface {

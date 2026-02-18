@@ -38,8 +38,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.sakethh.limae.data.repository.SuggestionCheckRepoImpl
-import com.sakethh.limae.model.LimaeSuggestionNote
+import com.sakethh.limae.domain.model.LimaeSuggestionBundle
 import com.sakethh.limae.platform.HarperEngine
+import com.sakethh.limae.platform.LanguageToolEngine
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.Icons
@@ -60,7 +61,8 @@ fun NoteScreen(
         initializer {
             NoteScreenVM(
                 suggestionCheckRepo = SuggestionCheckRepoImpl(
-                    harperEngine = HarperEngine
+                    harperEngine = HarperEngine,
+                    languageToolEngine = LanguageToolEngine
                 ), title = title,
                 content = content,
                 registerListeningToSuggestions = platform != Platform.AndroidMobile
@@ -186,10 +188,10 @@ typealias SuggestionNoteIndex = Int
 
 @Composable
 fun SuggestionsList(
-    suggestions: PersistentList<LimaeSuggestionNote>,
+    suggestions: PersistentList<LimaeSuggestionBundle>,
     modifier: Modifier = Modifier.fillMaxSize(),
     showStickyHeader: Boolean = true,
-    onAddToDictionary: (LimaeSuggestionNote) -> Unit,
+    onAddToDictionary: (LimaeSuggestionBundle) -> Unit,
     onSuggestionAccept: (LimaeNotesIndex, SuggestionNoteIndex) -> Unit
 ) {
     LazyColumn(modifier = modifier) {
@@ -228,7 +230,7 @@ fun SuggestionsList(
         }
         itemsIndexed(suggestions) { index, suggestion ->
             SuggestionNote(
-                limaeSuggestionNote = suggestion,
+                limaeSuggestionBundle = suggestion,
                 onAddToDictionary = {
                     onAddToDictionary(suggestion)
                 },

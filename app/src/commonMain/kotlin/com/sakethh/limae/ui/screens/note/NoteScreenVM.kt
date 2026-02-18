@@ -6,14 +6,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sakethh.limae.domain.SuggestionEngine
+import com.sakethh.limae.domain.model.LimaeSuggestionBundle
 import com.sakethh.limae.domain.repository.SuggestionCheckRepo
-import com.sakethh.limae.model.LimaeSuggestionNote
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.utils.onFailure
 import com.sakethh.limae.utils.onLoading
 import com.sakethh.limae.utils.onSuccess
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,11 +39,8 @@ class NoteScreenVM(
 
     private var grammarCheckJob: Job? = null
     private val _suggestions = MutableStateFlow(
-        ItemState<PersistentList<LimaeSuggestionNote>>(
-            isError = false,
-            errorMessage = null,
-            isLoading = false,
-            data = persistentListOf()
+        ItemState<PersistentList<LimaeSuggestionBundle>>(
+            isError = false, errorMessage = null, isLoading = false, data = persistentListOf()
         )
     )
     val suggestions = _suggestions.asStateFlow()
@@ -53,21 +52,26 @@ class NoteScreenVM(
             is NoteScreenAction.OnContentChange -> noteContent = noteScreenAction.newContent
             is NoteScreenAction.OnTitleChange -> noteTitle = noteScreenAction.newTitle
             is NoteScreenAction.OnSuggestionAccept -> {
-                val limaeSuggestion = suggestions.value.data[noteScreenAction.limaeNotesIndex]
-                val replacementText = limaeSuggestion
-                    .suggestions[noteScreenAction.suggestionNoteIndex].substringAfter(
-                    "“"
-                ).substringBeforeLast("”")
+                val limaeSuggestionBundle = suggestions.value.data[noteScreenAction.limaeNotesIndex]
+
+                val replacementText =
+                    limaeSuggestionBundle.suggestion.suggestions[noteScreenAction.suggestionNoteIndex].run {
+                        if (limaeSuggestionBundle.engine == SuggestionEngine.Harper)
+                            this.substringAfter(
+                                "“"
+                            ).substringBeforeLast("”") else this
+                    }
+
                 if (isEmittedFromTitle.load()) {
                     noteTitle = noteTitle.replaceRange(
-                        startIndex = limaeSuggestion.startIndex,
-                        endIndex = limaeSuggestion.endIndex,
+                        startIndex = limaeSuggestionBundle.suggestion.startIndex,
+                        endIndex = limaeSuggestionBundle.suggestion.endIndex,
                         replacement = replacementText
                     )
                 } else {
                     noteContent = noteContent.replaceRange(
-                        startIndex = limaeSuggestion.startIndex,
-                        endIndex = limaeSuggestion.endIndex,
+                        startIndex = limaeSuggestionBundle.suggestion.startIndex,
+                        endIndex = limaeSuggestionBundle.suggestion.endIndex,
                         replacement = replacementText
                     )
                 }
@@ -77,15 +81,15 @@ class NoteScreenVM(
 
     init {
         if (registerListeningToSuggestions) {
-            grammarCheckJob = viewModelScope.launch {
+            grammarCheckJob = viewModelScope.launch(Dispatchers.Default) {
                 launch {
                     snapshotFlow {
                         noteTitle
                     }.debounce(150).collectLatest {
                         isEmittedFromTitle.store(true)
                         _suggestions.onLoading()
-                        suggestionCheckRepo.viaHarper(it)
-                            .onSuccess(_suggestions::onSuccess).onFailure(
+                        suggestionCheckRepo.getSuggestions(it).onSuccess(_suggestions::onSuccess)
+                            .onFailure(
                                 _suggestions::onFailure
                             )
                     }
@@ -96,8 +100,8 @@ class NoteScreenVM(
                     }.debounce(150).collectLatest {
                         isEmittedFromTitle.store(false)
                         _suggestions.onLoading()
-                        suggestionCheckRepo.viaHarper(it)
-                            .onSuccess(_suggestions::onSuccess).onFailure(
+                        suggestionCheckRepo.getSuggestions(it).onSuccess(_suggestions::onSuccess)
+                            .onFailure(
                                 _suggestions::onFailure
                             )
                     }

@@ -23,10 +23,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.sakethh.limae.AccessibilitySuggestionsSheet
 import com.sakethh.limae.OverlayLifecycleOwner
-import com.sakethh.limae.data.repository.SuggestionCheckRepoImpl
+import com.sakethh.limae.data.repository.SuggestionsRepoImpl
 import com.sakethh.limae.domain.SuggestionEngine
 import com.sakethh.limae.domain.model.LimaeSuggestionBundle
-import com.sakethh.limae.domain.repository.SuggestionCheckRepo
+import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.platform.HarperEngine
 import com.sakethh.limae.platform.LanguageToolEngine
 import com.sakethh.limae.ui.Icons
@@ -66,7 +66,7 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
     private var isExpanded by mutableStateOf(false)
     private var showUI by mutableStateOf(false)
 
-    private val suggestionCheckRepo: SuggestionCheckRepo = SuggestionCheckRepoImpl(
+    private val suggestionsRepo: SuggestionsRepo = SuggestionsRepoImpl(
         harperEngine = HarperEngine,
         languageToolEngine = LanguageToolEngine
     )
@@ -94,7 +94,7 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
             snapshotFlow {
                 focusedTextFieldText
             }.debounce(250).collectLatest { inputText ->
-                suggestionCheckRepo.getSuggestions(inputText)
+                suggestionsRepo.getSuggestions(inputText)
                     .onSuccess(_suggestionsResult::onSuccess)
                     .onFailure(_suggestionsResult::onFailure)
                 println("limae_data:${_suggestionsResult.value.data} for input: $inputText")

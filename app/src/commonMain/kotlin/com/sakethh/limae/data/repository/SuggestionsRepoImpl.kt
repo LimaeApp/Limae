@@ -4,15 +4,15 @@ import com.sakethh.limae.domain.LanguageToolEngine
 import com.sakethh.limae.domain.SuggestionEngine
 import com.sakethh.limae.domain.model.LimaeSuggestion
 import com.sakethh.limae.domain.model.LimaeSuggestionBundle
-import com.sakethh.limae.domain.repository.SuggestionCheckRepo
+import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.model.HarperEngine
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
-class SuggestionCheckRepoImpl(
+class SuggestionsRepoImpl(
     private val harperEngine: HarperEngine,
     private val languageToolEngine: LanguageToolEngine
-) : SuggestionCheckRepo {
+) : SuggestionsRepo {
     override suspend fun getSuggestions(text: String): Result<PersistentList<LimaeSuggestionBundle>> {
         return try {
             val harperSuggestions = harperEngine.checkText(text)

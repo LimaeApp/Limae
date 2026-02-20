@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS Note (
+    id TEXT PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    lastModified INTEGER NOT NULL
+);
+
+getAllNotes:
+SELECT * FROM Note;
+
+getANoteById:
+SELECT * FROM Note WHERE id = :id;
+
+deleteANoteById:
+DELETE FROM Note WHERE id = :id;
+
+insertANote:
+INSERT INTO Note (id,title, content,lastModified) VALUES (:id,:title,:content,:lastModified);
+
+updateANoteById:
+UPDATE Note SET title = :title, content = :content, lastModified = :lastModified WHERE id = :id;

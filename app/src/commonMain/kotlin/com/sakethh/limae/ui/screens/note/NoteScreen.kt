@@ -37,11 +37,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.sakethh.limae.data.repository.SuggestionCheckRepoImpl
+import com.sakethh.limae.data.repository.NotesRepoImpl
+import com.sakethh.limae.data.repository.SuggestionsRepoImpl
 import com.sakethh.limae.domain.model.LimaeSuggestionBundle
 import com.sakethh.limae.platform.HarperEngine
 import com.sakethh.limae.platform.LanguageToolEngine
+import com.sakethh.limae.platform.LimaeDispatchers
 import com.sakethh.limae.platform.Platform
+import com.sakethh.limae.platform.localDatabase
 import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
@@ -53,18 +56,20 @@ import kotlinx.collections.immutable.PersistentList
 @Composable
 fun NoteScreen(
     takeAction: (LimaeAction) -> Unit,
-    title: String,
-    content: String,
-    lastSavedOn: String
+    noteId: String?,
 ) {
     val noteScreenVM: NoteScreenVM = viewModel(factory = viewModelFactory {
         initializer {
             NoteScreenVM(
-                suggestionCheckRepo = SuggestionCheckRepoImpl(
+                suggestionsRepo = SuggestionsRepoImpl(
                     harperEngine = HarperEngine,
                     languageToolEngine = LanguageToolEngine
-                ), title = title,
-                content = content,
+                ),
+                sourceNoteId = noteId,
+                notesRepo = NotesRepoImpl(
+                    noteQueries = localDatabase.noteQueries,
+                    limaeDispatchers = LimaeDispatchers
+                ),
                 registerListeningToSuggestions = platform != Platform.AndroidMobile
             )
         }
@@ -98,6 +103,22 @@ fun NoteScreen(
                         contentDescription = "Icon button to navigate back to main screen"
                     )
                 }
+            }, actions = {
+                IconButton(modifier = Modifier.showHandOnHover(), onClick = {
+                    noteScreenVM.onAction(
+                        NoteScreenAction.SaveNote(
+                            noteId = noteId,
+                            title = noteScreenVM.note.title,
+                            content = noteScreenVM.note.content, onCompletion = {
+
+                            }
+                        ))
+                }) {
+                    Icon(
+                        imageVector = Icons.Save,
+                        contentDescription = "Updates/Saves the title and content to the local database"
+                    )
+                }
             })
             if (platform != Platform.AndroidMobile) {
                 HorizontalDivider()
@@ -123,7 +144,7 @@ fun NoteScreen(
                                 style = MaterialTheme.typography.titleMedium
                             )
                         },
-                        value = noteScreenVM.noteTitle,
+                        value = noteScreenVM.note.title,
                         onValueChange = {
                             noteScreenVM.onAction(NoteScreenAction.OnTitleChange(it))
                         },
@@ -141,7 +162,7 @@ fun NoteScreen(
                                 style = MaterialTheme.typography.titleSmall
                             )
                         },
-                        value = noteScreenVM.noteContent,
+                        value = noteScreenVM.note.content,
                         onValueChange = {
                             noteScreenVM.onAction(NoteScreenAction.OnContentChange(it))
                         },
@@ -154,7 +175,7 @@ fun NoteScreen(
                 }
                 item {
                     Text(
-                        text = "Last saved on $lastSavedOn",
+                        text = "Last saved on ${noteScreenVM.note.lastModified}",
                         modifier = Modifier.padding(start = 15.dp)
                             .imePadding(),
                         color = MaterialTheme.colorScheme.secondary,

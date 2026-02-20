@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface NavRoute {
     @Serializable
-    data object Main: NavRoute
+    data object Home: NavRoute
 
     @Serializable
-    data object Note: NavRoute
+    data class Note(val noteId: String?): NavRoute
 }

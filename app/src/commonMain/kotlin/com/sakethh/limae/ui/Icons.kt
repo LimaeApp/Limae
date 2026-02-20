@@ -7,6 +7,130 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 object Icons {
+    val Delete: ImageVector
+        get() {
+            if (_Delete != null) {
+                return _Delete!!
+            }
+            _Delete = ImageVector.Builder(
+                name = "Delete",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 960f,
+                viewportHeight = 960f
+            ).apply {
+                path(fill = SolidColor(Color(0xFFE3E3E3))) {
+                    moveTo(280f, 840f)
+                    quadToRelative(-33f, 0f, -56.5f, -23.5f)
+                    reflectiveQuadTo(200f, 760f)
+                    verticalLineToRelative(-520f)
+                    horizontalLineToRelative(-40f)
+                    verticalLineToRelative(-80f)
+                    horizontalLineToRelative(200f)
+                    verticalLineToRelative(-40f)
+                    horizontalLineToRelative(240f)
+                    verticalLineToRelative(40f)
+                    horizontalLineToRelative(200f)
+                    verticalLineToRelative(80f)
+                    horizontalLineToRelative(-40f)
+                    verticalLineToRelative(520f)
+                    quadToRelative(0f, 33f, -23.5f, 56.5f)
+                    reflectiveQuadTo(680f, 840f)
+                    lineTo(280f, 840f)
+                    close()
+                    moveTo(680f, 240f)
+                    lineTo(280f, 240f)
+                    verticalLineToRelative(520f)
+                    horizontalLineToRelative(400f)
+                    verticalLineToRelative(-520f)
+                    close()
+                    moveTo(360f, 680f)
+                    horizontalLineToRelative(80f)
+                    verticalLineToRelative(-360f)
+                    horizontalLineToRelative(-80f)
+                    verticalLineToRelative(360f)
+                    close()
+                    moveTo(520f, 680f)
+                    horizontalLineToRelative(80f)
+                    verticalLineToRelative(-360f)
+                    horizontalLineToRelative(-80f)
+                    verticalLineToRelative(360f)
+                    close()
+                    moveTo(280f, 240f)
+                    verticalLineToRelative(520f)
+                    verticalLineToRelative(-520f)
+                    close()
+                }
+            }.build()
+
+            return _Delete!!
+        }
+
+    @Suppress("ObjectPropertyName")
+    private var _Delete: ImageVector? = null
+
+    val Save: ImageVector
+        get() {
+            if (_Save != null) {
+                return _Save!!
+            }
+            _Save = ImageVector.Builder(
+                name = "Save",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 960f,
+                viewportHeight = 960f
+            ).apply {
+                path(fill = SolidColor(Color(0xFFE3E3E3))) {
+                    moveTo(840f, 280f)
+                    verticalLineToRelative(480f)
+                    quadToRelative(0f, 33f, -23.5f, 56.5f)
+                    reflectiveQuadTo(760f, 840f)
+                    lineTo(200f, 840f)
+                    quadToRelative(-33f, 0f, -56.5f, -23.5f)
+                    reflectiveQuadTo(120f, 760f)
+                    verticalLineToRelative(-560f)
+                    quadToRelative(0f, -33f, 23.5f, -56.5f)
+                    reflectiveQuadTo(200f, 120f)
+                    horizontalLineToRelative(480f)
+                    lineToRelative(160f, 160f)
+                    close()
+                    moveTo(760f, 314f)
+                    lineTo(646f, 200f)
+                    lineTo(200f, 200f)
+                    verticalLineToRelative(560f)
+                    horizontalLineToRelative(560f)
+                    verticalLineToRelative(-446f)
+                    close()
+                    moveTo(565f, 685f)
+                    quadToRelative(35f, -35f, 35f, -85f)
+                    reflectiveQuadToRelative(-35f, -85f)
+                    quadToRelative(-35f, -35f, -85f, -35f)
+                    reflectiveQuadToRelative(-85f, 35f)
+                    quadToRelative(-35f, 35f, -35f, 85f)
+                    reflectiveQuadToRelative(35f, 85f)
+                    quadToRelative(35f, 35f, 85f, 35f)
+                    reflectiveQuadToRelative(85f, -35f)
+                    close()
+                    moveTo(240f, 400f)
+                    horizontalLineToRelative(360f)
+                    verticalLineToRelative(-160f)
+                    lineTo(240f, 240f)
+                    verticalLineToRelative(160f)
+                    close()
+                    moveTo(200f, 314f)
+                    verticalLineToRelative(446f)
+                    verticalLineToRelative(-560f)
+                    verticalLineToRelative(114f)
+                    close()
+                }
+            }.build()
+
+            return _Save!!
+        }
+
+    @Suppress("ObjectPropertyName")
+    private var _Save: ImageVector? = null
 
     val ListAltAdd: ImageVector
         get() {

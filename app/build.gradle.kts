@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    id("app.cash.sqldelight") version "2.2.1"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
 }
 
@@ -32,6 +33,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation("app.cash.sqldelight:android-driver:2.2.1")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -46,6 +48,11 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.compose.components.resources)
             implementation(libs.kotlinx.collections.immutable)
+
+            implementation("app.cash.sqldelight:runtime:2.2.1")
+            implementation("app.cash.sqldelight:coroutines-extensions:2.2.1")
+            implementation(libs.kotlinx.datetime)
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -55,9 +62,11 @@ kotlin {
             implementation(libs.kotlinx.coroutinesSwing)
             implementation("org.languagetool:languagetool-core:6.7")
             implementation("org.languagetool:language-en:6.7")
+            implementation("app.cash.sqldelight:sqlite-driver:2.2.1")
         }
         webMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
+            implementation("app.cash.sqldelight:web-worker-driver:2.2.1")
         }
     }
 }
@@ -124,3 +133,13 @@ tasks.withType<JavaExec>().configureEach {
         systemProperty("java.library.path", rustBuildDir.absolutePath)
     }
 }
+
+
+
+sqldelight {
+    databases.create("LimaeDatabase") {
+        packageName.set("com.sakethh.limae")
+    }
+}
+
+

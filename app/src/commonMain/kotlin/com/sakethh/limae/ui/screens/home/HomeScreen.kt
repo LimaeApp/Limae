@@ -35,31 +35,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.sakethh.limae.data.repository.NotesRepoImpl
-import com.sakethh.limae.platform.LimaeDispatchers
-import com.sakethh.limae.platform.localDatabase
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.ui.navigation.NavRoute
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
     val topAppBarScrollBehaviour = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val homeScreenVM: HomeScreenVM = viewModel(factory = viewModelFactory {
-        initializer {
-            HomeScreenVM(
-                NotesRepoImpl(
-                    noteQueries = localDatabase.noteQueries,
-                    limaeDispatchers = LimaeDispatchers
-                )
-            )
-        }
-    })
+    val homeScreenVM: HomeScreenVM = koinViewModel()
 
     val savedNotes by homeScreenVM.savedNotes.collectAsStateWithLifecycle()
 

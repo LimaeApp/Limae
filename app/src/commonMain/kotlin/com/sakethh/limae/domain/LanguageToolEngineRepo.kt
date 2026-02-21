@@ -1,7 +1,5 @@
 package com.sakethh.limae.domain
 
-import com.sakethh.limae.model.EngineSuggestion
-
-interface LanguageToolEngine {
+interface LanguageToolEngineRepo {
    suspend fun checkText(text: String): List<EngineSuggestion>
 }

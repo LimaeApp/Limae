@@ -154,11 +154,12 @@ tasks.matching { it.name == "preBuild" }.configureEach {
     dependsOn("cargoBuildAndroid")
 }
 
-tasks.matching { it.name == "processJvmResources" || it.name == "jvmProcessResources" }.configureEach {
-    dependsOn("cargoBuildDesktop")
-}
+tasks.matching { it.name == "processJvmResources" || it.name == "jvmProcessResources" }
+    .configureEach {
+        dependsOn("cargoBuildDesktop")
+    }
 
-tasks.matching { it.name == "compileKotlinWasmJs" }.configureEach {
+tasks.matching { it.name == "compileKotlinWasmJs" || it.name == "kotlinNpmInstall" }.configureEach {
     dependsOn("cargoBuildWasm")
 }
 

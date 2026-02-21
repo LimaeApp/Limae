@@ -1,5 +1,5 @@
-package com.sakethh.limae.model
+package com.sakethh.limae.domain
 
-interface HarperEngine {
+interface HarperEngineRepo {
    suspend fun checkText(text: String): List<EngineSuggestion>
 }

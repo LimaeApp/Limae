@@ -1,4 +1,4 @@
-package com.sakethh.limae.model
+package com.sakethh.limae.domain
 
 import kotlinx.serialization.Serializable
 

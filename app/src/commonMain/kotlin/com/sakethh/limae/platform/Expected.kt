@@ -1,18 +1,16 @@
 package com.sakethh.limae.platform
 
-import app.cash.sqldelight.db.SqlDriver
-import com.sakethh.limae.LimaeDatabase
-import com.sakethh.limae.domain.LanguageToolEngine
-import com.sakethh.limae.domain.LimaeDispatchers
-import com.sakethh.limae.model.EngineSuggestion
-import com.sakethh.limae.model.HarperEngine
+import com.sakethh.limae.domain.EngineSuggestion
+import com.sakethh.limae.domain.HarperEngineRepo
+import com.sakethh.limae.domain.LanguageToolEngineRepo
 import kotlinx.coroutines.CoroutineDispatcher
+import org.koin.core.module.Module
 
-expect object HarperEngine : HarperEngine {
+expect object HarperEngine : HarperEngineRepo {
     override suspend fun checkText(text: String): List<EngineSuggestion>
 }
 
-expect object LanguageToolEngine : LanguageToolEngine {
+expect object LanguageToolEngine : LanguageToolEngineRepo {
     override suspend fun checkText(text: String): List<EngineSuggestion>
 }
 
@@ -21,11 +19,4 @@ expect val platform: Platform
 expect val LimaeIODispatcher: CoroutineDispatcher
 
 
-// TODO: replace all the below stuff with DI
-expect fun getSqlDriver(): SqlDriver
-
-val localDatabase = LimaeDatabase.invoke(getSqlDriver())
-
-val LimaeDispatchers = object : LimaeDispatchers {
-    override val IO: CoroutineDispatcher = LimaeIODispatcher
-}
+expect suspend fun platformDatabaseModule(): Module

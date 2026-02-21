@@ -1,9 +1,9 @@
 package com.sakethh.limae
-import com.sakethh.limae.model.HarperEngine
-import com.sakethh.limae.model.EngineSuggestion
+import com.sakethh.limae.domain.HarperEngineRepo
+import com.sakethh.limae.domain.EngineSuggestion
 import kotlinx.serialization.json.Json
 
-object HarperJVMEngine: HarperEngine {
+object HarperJVMEngine: HarperEngineRepo {
     init {
         System.loadLibrary("harper_binding")
     }

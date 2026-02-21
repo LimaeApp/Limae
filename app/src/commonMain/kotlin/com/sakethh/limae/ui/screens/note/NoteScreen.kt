@@ -37,20 +37,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.sakethh.limae.data.repository.NotesRepoImpl
-import com.sakethh.limae.data.repository.SuggestionsRepoImpl
 import com.sakethh.limae.domain.model.LimaeSuggestionBundle
-import com.sakethh.limae.platform.HarperEngine
-import com.sakethh.limae.platform.LanguageToolEngine
-import com.sakethh.limae.platform.LimaeDispatchers
 import com.sakethh.limae.platform.Platform
-import com.sakethh.limae.platform.localDatabase
 import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.SuggestionNote
 import com.sakethh.limae.ui.common.showHandOnHover
 import kotlinx.collections.immutable.PersistentList
+import org.koin.compose.getKoin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,18 +53,13 @@ fun NoteScreen(
     takeAction: (LimaeAction) -> Unit,
     noteId: String?,
 ) {
+    val koinInstance = getKoin()
     val noteScreenVM: NoteScreenVM = viewModel(factory = viewModelFactory {
         initializer {
             NoteScreenVM(
-                suggestionsRepo = SuggestionsRepoImpl(
-                    harperEngine = HarperEngine,
-                    languageToolEngine = LanguageToolEngine
-                ),
+                suggestionsRepo = koinInstance.get(),
                 sourceNoteId = noteId,
-                notesRepo = NotesRepoImpl(
-                    noteQueries = localDatabase.noteQueries,
-                    limaeDispatchers = LimaeDispatchers
-                ),
+                notesRepo = koinInstance.get(),
                 registerListeningToSuggestions = platform != Platform.AndroidMobile
             )
         }
@@ -95,6 +85,8 @@ fun NoteScreen(
                     fontSize = 18.sp
                 )
             }, navigationIcon = {
+                if (platform == Platform.Web) return@TopAppBar
+
                 IconButton(modifier = Modifier.showHandOnHover(), onClick = {
                     takeAction(LimaeAction.NavigateBack)
                 }) {
@@ -104,6 +96,8 @@ fun NoteScreen(
                     )
                 }
             }, actions = {
+                if (platform == Platform.Web) return@TopAppBar
+
                 IconButton(modifier = Modifier.showHandOnHover(), onClick = {
                     noteScreenVM.onAction(
                         NoteScreenAction.SaveNote(
@@ -173,6 +167,7 @@ fun NoteScreen(
                         colors = textFieldColors
                     )
                 }
+                if (platform == Platform.Web) return@LazyColumn
                 item {
                     Text(
                         text = "Last saved on ${noteScreenVM.note.lastModified}",

@@ -34,7 +34,11 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation("app.cash.sqldelight:android-driver:2.2.1")
+
+            implementation(libs.koin.android)
+            implementation(libs.koin.androidx.compose)
         }
+
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -53,10 +57,15 @@ kotlin {
             implementation("app.cash.sqldelight:coroutines-extensions:2.2.1")
             implementation(libs.kotlinx.datetime)
 
+            api(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
         }
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
@@ -139,6 +148,9 @@ tasks.withType<JavaExec>().configureEach {
 sqldelight {
     databases.create("LimaeDatabase") {
         packageName.set("com.sakethh.limae")
+        deriveSchemaFromMigrations.set(true)
+        verifyMigrations.set(true)
+        generateAsync.set(true)
     }
 }
 

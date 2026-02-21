@@ -1,4 +1,4 @@
-package com.sakethh.limae.model
+package com.sakethh.limae.domain
 
 import androidx.compose.runtime.Stable
 import kotlinx.serialization.Serializable

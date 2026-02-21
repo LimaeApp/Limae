@@ -67,8 +67,8 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
     private var showUI by mutableStateOf(false)
 
     private val suggestionsRepo: SuggestionsRepo = SuggestionsRepoImpl(
-        harperEngine = HarperEngine,
-        languageToolEngine = LanguageToolEngine
+        harperEngineRepo = HarperEngine,
+        languageToolEngineRepo = LanguageToolEngine
     )
     private var focusedTextFieldText by mutableStateOf("")
 

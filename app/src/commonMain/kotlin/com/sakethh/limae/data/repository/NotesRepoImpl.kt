@@ -41,7 +41,7 @@ class NotesRepoImpl(
                     content = content,
                     lastModified = getEpochSecond()
                 )
-            }.await()
+            }
             noteId
         }
     }

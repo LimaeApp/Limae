@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sakethh.limae.domain.model.LimaeSuggestionBundle
-import com.sakethh.limae.model.LintKind
+import com.sakethh.limae.domain.LintKind
 import com.sakethh.limae.ui.Icons
 
 @Composable

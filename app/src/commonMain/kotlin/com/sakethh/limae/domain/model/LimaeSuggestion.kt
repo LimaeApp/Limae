@@ -1,7 +1,7 @@
 package com.sakethh.limae.domain.model
 
 import androidx.compose.runtime.Stable
-import com.sakethh.limae.model.LintKind
+import com.sakethh.limae.domain.LintKind
 import kotlinx.serialization.Serializable
 
 @Serializable

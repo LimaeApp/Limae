@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +40,7 @@ import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.ui.navigation.NavRoute
+import com.sakethh.limae.utils.epochToReadableDateTime
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,6 +157,21 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                             )
                         }
                     }
+                    Text(
+                        text = rememberSaveable(note.lastModified) {
+                            epochToReadableDateTime(note.lastModified).toString()
+                        },
+                        style = MaterialTheme.typography.titleSmall,
+                        fontSize = 15.sp,
+                        modifier = Modifier.padding(
+                            start = 15.dp,
+                            bottom = 15.dp,
+                            end = 15.dp
+                        ),
+                        maxLines = 5,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
                 }
             }
         }

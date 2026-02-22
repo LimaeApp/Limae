@@ -16,6 +16,7 @@ import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.utils.onFailure
 import com.sakethh.limae.utils.onLoading
 import com.sakethh.limae.utils.onSuccess
+import com.sakethh.limae.utils.runSafe
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
@@ -23,8 +24,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -57,6 +60,54 @@ class NoteScreenVM(
     private val isEmittedFromTitle = AtomicBoolean(true)
     private var lastInsertedId: String? = null
 
+    // a boolean would have been enough
+    private val pauseSuggestions = Mutex(locked = false)
+
+    private fun getSuggestionValue(suggestion: String, engine: SuggestionEngine): String {
+        return if (engine == SuggestionEngine.Harper)
+            suggestion.substringAfter(
+                "“"
+            ).substringBeforeLast("”") else suggestion
+    }
+
+    private fun applySuggestionToNote(
+        replacementText: String,
+        engine: SuggestionEngine,
+        startIndex: Int,
+        endIndex: Int
+    ) {
+        val replacementText = replacementText.run {
+            getSuggestionValue(
+                suggestion = replacementText,
+                engine = engine
+            )
+        }
+
+        runSafe {
+            if (isEmittedFromTitle.load()) {
+                note = note.run {
+                    copy(
+                        title = title.replaceRange(
+                            startIndex = startIndex,
+                            endIndex = endIndex,
+                            replacement = replacementText
+                        )
+                    )
+                }
+            } else {
+                note = note.run {
+                    copy(
+                        content = content.replaceRange(
+                            startIndex = startIndex,
+                            endIndex = endIndex,
+                            replacement = replacementText
+                        )
+                    )
+                }
+            }
+        }
+    }
+
     fun onAction(noteScreenAction: NoteScreenAction) {
         when (noteScreenAction) {
             is NoteScreenAction.OnContentChange -> note =
@@ -65,36 +116,12 @@ class NoteScreenVM(
             is NoteScreenAction.OnTitleChange -> note = note.copy(title = noteScreenAction.newTitle)
             is NoteScreenAction.OnSuggestionAccept -> {
                 val limaeSuggestionBundle = suggestions.value.data[noteScreenAction.limaeNotesIndex]
-
-                val replacementText =
-                    limaeSuggestionBundle.suggestion.suggestions[noteScreenAction.suggestionNoteIndex].run {
-                        if (limaeSuggestionBundle.engine == SuggestionEngine.Harper)
-                            this.substringAfter(
-                                "“"
-                            ).substringBeforeLast("”") else this
-                    }
-
-                if (isEmittedFromTitle.load()) {
-                    note = note.run {
-                        copy(
-                            title = title.replaceRange(
-                                startIndex = limaeSuggestionBundle.suggestion.startIndex,
-                                endIndex = limaeSuggestionBundle.suggestion.endIndex,
-                                replacement = replacementText
-                            )
-                        )
-                    }
-                } else {
-                    note = note.run {
-                        copy(
-                            content = content.replaceRange(
-                                startIndex = limaeSuggestionBundle.suggestion.startIndex,
-                                endIndex = limaeSuggestionBundle.suggestion.endIndex,
-                                replacement = replacementText
-                            )
-                        )
-                    }
-                }
+                applySuggestionToNote(
+                    replacementText = limaeSuggestionBundle.suggestion.suggestions[noteScreenAction.suggestionNoteIndex],
+                    engine = limaeSuggestionBundle.engine,
+                    startIndex = limaeSuggestionBundle.suggestion.startIndex,
+                    endIndex = limaeSuggestionBundle.suggestion.endIndex
+                )
             }
 
             is NoteScreenAction.SaveNote -> {
@@ -103,18 +130,33 @@ class NoteScreenVM(
                         notesRepo.insertANote(
                             title = noteScreenAction.title,
                             content = noteScreenAction.content
-                        ).onSuccess { (insertedNoteId) ->
+                        ).onSuccess { result ->
+                            val (insertedNoteId, eventTimestamp) = result.data
                             lastInsertedId = insertedNoteId
+                            note = note.copy(lastModified = eventTimestamp)
                         }
                     } else {
                         notesRepo.updateANoteById(
                             id = noteScreenAction.noteId ?: lastInsertedId!!,
                             title = noteScreenAction.title,
                             content = noteScreenAction.content
-                        )
+                        ).onSuccess { result ->
+                            val eventTimestamp = result.data
+                            note = note.copy(lastModified = eventTimestamp)
+                        }
                     }
                 }.invokeOnCompletion {
                     noteScreenAction.onCompletion()
+                }
+            }
+
+            is NoteScreenAction.AcceptAllSuggestions -> {
+                if (pauseSuggestions.isLocked) return
+
+                viewModelScope.launch {
+                    pauseSuggestions.withLock {
+                        TODO()
+                    }
                 }
             }
         }
@@ -134,7 +176,11 @@ class NoteScreenVM(
                 launch {
                     snapshotFlow {
                         note.title
-                    }.debounce(150).collectLatest {
+                    }.transform {
+                        if (!pauseSuggestions.isLocked) {
+                            emit(it)
+                        }
+                    }.collectLatest {
                         isEmittedFromTitle.store(true)
                         _suggestions.onLoading()
                         suggestionsRepo.getSuggestions(it).onSuccess(_suggestions::onSuccess)
@@ -146,7 +192,11 @@ class NoteScreenVM(
                 launch {
                     snapshotFlow {
                         note.content
-                    }.debounce(150).collectLatest {
+                    }.transform {
+                        if (!pauseSuggestions.isLocked) {
+                            emit(it)
+                        }
+                    }.collectLatest {
                         isEmittedFromTitle.store(false)
                         _suggestions.onLoading()
                         suggestionsRepo.getSuggestions(it).onSuccess(_suggestions::onSuccess)

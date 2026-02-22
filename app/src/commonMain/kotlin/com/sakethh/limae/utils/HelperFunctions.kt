@@ -9,6 +9,10 @@ import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import com.sakethh.limae.domain.Result
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 fun <T> MutableStateFlow<ItemState<T>>.onLoading() {
     update {
@@ -43,5 +47,47 @@ inline fun <T> runSafe(block: () -> T): Result<T> {
     } catch (e: Throwable) {
         e.printStackTrace()
         Result.Failure(e)
+    }
+}
+
+
+@OptIn(ExperimentalTime::class)
+fun epochToReadableDateTime(
+    epochSeconds: Long,
+    timeZone: TimeZone = TimeZone.currentSystemDefault()
+): String? {
+    return try {
+        Instant.fromEpochSeconds(epochSeconds).toLocalDateTime(timeZone)
+            .run {
+                "${"${this.date.day}".addZeroAtPrefixOnInt()} ${
+                    month.name.initialCaps()
+                } ${this.year}, ${
+                    "${
+                        (if (this.time.hour > 12) time.hour - 12 else time.hour)
+                    }".addZeroAtPrefixOnInt()
+                }:${"${this.time.minute}".addZeroAtPrefixOnInt()}:${"${this.time.second}".addZeroAtPrefixOnInt()} ${if (this.time.hour > 11) "PM" else "AM"}"
+            }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun String.addZeroAtPrefixOnInt() =
+    try {
+        if (toInt() > 9) this else "0$this"
+    } catch (e: Exception) {
+        e.printStackTrace()
+        this
+    }
+
+
+fun String.initialCaps(): String {
+    return when {
+        length > 1 -> {
+            get(0).uppercase() + substring(1).lowercase()
+        }
+
+        else -> this.uppercase()
     }
 }

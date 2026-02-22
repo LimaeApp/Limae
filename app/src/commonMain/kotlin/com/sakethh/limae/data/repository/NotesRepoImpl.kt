@@ -31,18 +31,19 @@ class NotesRepoImpl(
     override suspend fun insertANote(
         title: String,
         content: String
-    ): Result<String> {
+    ): Result<Pair<String, Long>> {
         return runSafe {
             val noteId = getRandomUUIDv7()
+            val eventTimestamp = getEpochSecond()
             withContext(limaeDispatchers.IO) {
                 noteQueries.insertANote(
                     id = noteId,
                     title = title,
                     content = content,
-                    lastModified = getEpochSecond()
+                    lastModified = eventTimestamp
                 )
             }
-            noteId
+            noteId to eventTimestamp
         }
     }
 
@@ -50,16 +51,18 @@ class NotesRepoImpl(
         id: String,
         title: String,
         content: String
-    ): Result<Unit> {
+    ): Result<Long> {
+        val eventTimestamp = getEpochSecond()
         return runSafe {
             withContext(limaeDispatchers.IO) {
                 noteQueries.updateANoteById(
                     title = title,
                     content = content,
-                    lastModified = getEpochSecond(),
+                    lastModified = eventTimestamp,
                     id = id
                 )
             }
+            eventTimestamp
         }
     }
 

@@ -1,6 +1,7 @@
 package com.sakethh.limae.ui.screens.note
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,6 +29,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -44,6 +48,7 @@ import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.SuggestionNote
 import com.sakethh.limae.ui.common.showHandOnHover
+import com.sakethh.limae.utils.epochToReadableDateTime
 import kotlinx.collections.immutable.PersistentList
 import org.koin.compose.getKoin
 
@@ -170,8 +175,10 @@ fun NoteScreen(
                 if (platform == Platform.Web) return@LazyColumn
                 item {
                     Text(
-                        text = "Last saved on ${noteScreenVM.note.lastModified}",
-                        modifier = Modifier.padding(start = 15.dp)
+                        text = rememberSaveable(noteScreenVM.note.lastModified) {
+                            "Last saved on ${epochToReadableDateTime(noteScreenVM.note.lastModified)}"
+                        },
+                        modifier = Modifier.padding(start = 15.dp, bottom = 15.dp)
                             .imePadding(),
                         color = MaterialTheme.colorScheme.secondary,
                         style = MaterialTheme.typography.titleSmall
@@ -184,6 +191,11 @@ fun NoteScreen(
                 modifier = Modifier.fillMaxHeight().padding(start = 7.5.dp)
             )
             SuggestionsList(
+                onAcceptAll = {
+                    noteScreenVM.onAction(
+                        noteScreenAction = NoteScreenAction.AcceptAllSuggestions
+                    )
+                },
                 suggestions = suggestions.data,
                 onAddToDictionary = {},
                 onSuggestionAccept = { limaeNotesIndex, suggestionNoteIndex ->
@@ -208,21 +220,41 @@ fun SuggestionsList(
     modifier: Modifier = Modifier.fillMaxSize(),
     showStickyHeader: Boolean = true,
     onAddToDictionary: (LimaeSuggestionBundle) -> Unit,
-    onSuggestionAccept: (LimaeNotesIndex, SuggestionNoteIndex) -> Unit
+    onSuggestionAccept: (LimaeNotesIndex, SuggestionNoteIndex) -> Unit,
+    onAcceptAll: () -> Unit
 ) {
     LazyColumn(modifier = modifier) {
         if (showStickyHeader) {
             stickyHeader {
-                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
-                    Text(
-                        text = "Suggestions",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontSize = 24.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = 15.dp, top = 15.dp)
-                    )
+                Column(
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface).fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth().padding(15.dp)
+                    ) {
+                        Text(
+                            text = "Suggestions",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontSize = 24.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.fillMaxWidth(0.75f)
+                                .padding(start = 5.dp)
+                        )
+                        FilledTonalIconButton(
+                            enabled = !suggestions.isEmpty(),
+                            modifier = Modifier.showHandOnHover(),
+                            onClick = onAcceptAll
+                        ) {
+                            Icon(
+                                imageVector = Icons.DoneAll,
+                                contentDescription = "Apply all the edits"
+                            )
+                        }
+                    }
                     HorizontalDivider(
-                        modifier = Modifier.padding(top = 15.dp, bottom = 5.dp).fillMaxWidth(),
+                        modifier = Modifier.padding(bottom = 5.dp).fillMaxWidth(),
                     )
                 }
             }

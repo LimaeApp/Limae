@@ -1,5 +1,7 @@
 package com.sakethh.limae.platform
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.runtime.Composable
 import com.sakethh.limae.domain.EngineSuggestion
 import com.sakethh.limae.domain.HarperEngineRepo
 import com.sakethh.limae.domain.LanguageToolEngineRepo
@@ -18,5 +20,12 @@ expect val platform: Platform
 
 expect val LimaeIODispatcher: CoroutineDispatcher
 
-
 expect suspend fun platformDatabaseModule(): Module
+
+expect fun platformDataPreferencesModule(): Module
+
+@Composable
+expect fun dynamicLightTheme(): ColorScheme
+
+@Composable
+expect fun dynamicDarkTheme(): ColorScheme

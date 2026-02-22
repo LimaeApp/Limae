@@ -10,7 +10,7 @@ import com.sakethh.limae.ui.theme.LimaeTheme
 suspend fun main() {
     initializeKoin()
     ComposeViewport {
-        LimaeTheme(darkTheme = true) {
+        LimaeTheme {
             Limae()
         }
     }

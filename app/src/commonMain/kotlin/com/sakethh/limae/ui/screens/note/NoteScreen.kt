@@ -29,6 +29,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateSetOf
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,79 +61,88 @@ fun NoteScreen(
     noteId: String?,
 ) {
     val koinInstance = getKoin()
-    val noteScreenVM: NoteScreenVM = viewModel(factory = viewModelFactory {
-        initializer {
-            NoteScreenVM(
-                suggestionsRepo = koinInstance.get(),
-                sourceNoteId = noteId,
-                notesRepo = koinInstance.get(),
-                registerListeningToSuggestions = platform != Platform.AndroidMobile
-            )
-        }
-    })
+    val noteScreenVM: NoteScreenVM =
+        viewModel(
+            factory =
+                viewModelFactory {
+                    initializer {
+                        NoteScreenVM(
+                            suggestionsRepo = koinInstance.get(),
+                            sourceNoteId = noteId,
+                            notesRepo = koinInstance.get(),
+                            registerListeningToSuggestions = platform.type != Platform.Type.AndroidMobile,
+                        )
+                    }
+                },
+        )
     val suggestions by noteScreenVM.suggestions.collectAsStateWithLifecycle()
     val topAppBarScrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
-    val textFieldColors = TextFieldDefaults.colors(
-        focusedContainerColor = Color.Transparent,
-        errorContainerColor = Color.Transparent,
-        disabledContainerColor = Color.Transparent,
-        unfocusedContainerColor = Color.Transparent,
-        errorIndicatorColor = Color.Transparent,
-        focusedIndicatorColor = Color.Transparent,
-        disabledIndicatorColor = Color.Transparent,
-        unfocusedIndicatorColor = Color.Transparent,
-    )
+    val textFieldColors =
+        TextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            errorContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            errorIndicatorColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        )
     Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
         Column {
             TopAppBar(scrollBehavior = topAppBarScrollBehaviour, title = {
                 Text(
                     text = "Limae",
                     style = MaterialTheme.typography.labelSmall,
-                    fontSize = 18.sp
+                    fontSize = 18.sp,
                 )
             }, navigationIcon = {
-                if (platform == Platform.Web) return@TopAppBar
+                if (platform.type == Platform.Type.Web) return@TopAppBar
 
                 IconButton(modifier = Modifier.showHandOnHover(), onClick = {
                     takeAction(LimaeAction.NavigateBack)
                 }) {
                     Icon(
                         imageVector = Icons.ArrowBack,
-                        contentDescription = "Icon button to navigate back to main screen"
+                        contentDescription = "Icon button to navigate back to main screen",
                     )
                 }
             }, actions = {
-                if (platform == Platform.Web) return@TopAppBar
+                if (platform.type == Platform.Type.Web) return@TopAppBar
 
                 IconButton(modifier = Modifier.showHandOnHover(), onClick = {
                     noteScreenVM.onAction(
                         NoteScreenAction.SaveNote(
                             noteId = noteId,
                             title = noteScreenVM.note.title,
-                            content = noteScreenVM.note.content, onCompletion = {
-
-                            }
-                        ))
+                            content = noteScreenVM.note.content,
+                            onCompletion = {},
+                        ),
+                    )
                 }) {
                     Icon(
                         imageVector = Icons.Save,
-                        contentDescription = "Updates/Saves the title and content to the local database"
+                        contentDescription = "Updates/Saves the title and content to the local database",
                     )
                 }
             })
-            if (platform != Platform.AndroidMobile) {
+            if (platform.type != Platform.Type.AndroidMobile) {
                 HorizontalDivider()
             }
         }
     }) { paddingValues ->
         Row(
-            modifier = Modifier.padding(paddingValues)
-                .nestedScroll(topAppBarScrollBehaviour.nestedScrollConnection).fillMaxSize()
+            modifier =
+                Modifier
+                    .padding(paddingValues)
+                    .nestedScroll(topAppBarScrollBehaviour.nestedScrollConnection)
+                    .fillMaxSize(),
         ) {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(if (platform == Platform.AndroidMobile) 1f else 0.65f)
+                modifier =
+                    Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(if (platform.type == Platform.Type.AndroidMobile) 1f else 0.65f),
             ) {
                 item {
                     TextField(
@@ -140,7 +151,7 @@ fun NoteScreen(
                                 text = "Title",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
                             )
                         },
                         value = noteScreenVM.note.title,
@@ -149,7 +160,7 @@ fun NoteScreen(
                         },
                         textStyle = MaterialTheme.typography.titleMedium.copy(fontSize = 24.sp),
                         modifier = Modifier.fillMaxWidth(),
-                        colors = textFieldColors
+                        colors = textFieldColors,
                     )
                 }
                 item {
@@ -158,54 +169,59 @@ fun NoteScreen(
                             Text(
                                 text = "Content",
                                 fontSize = 18.sp,
-                                style = MaterialTheme.typography.titleSmall
+                                style = MaterialTheme.typography.titleSmall,
                             )
                         },
                         value = noteScreenVM.note.content,
                         onValueChange = {
                             noteScreenVM.onAction(NoteScreenAction.OnContentChange(it))
                         },
-                        textStyle = MaterialTheme.typography.titleSmall.copy(
-                            fontSize = 18.sp,
-                        ),
+                        textStyle =
+                            MaterialTheme.typography.titleSmall.copy(
+                                fontSize = 18.sp,
+                            ),
                         modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 250.dp),
-                        colors = textFieldColors
+                        colors = textFieldColors,
                     )
                 }
-                if (platform == Platform.Web) return@LazyColumn
+                if (platform.type == Platform.Type.Web) return@LazyColumn
                 item {
                     Text(
-                        text = rememberSaveable(noteScreenVM.note.lastModified) {
-                            "Last saved on ${epochToReadableDateTime(noteScreenVM.note.lastModified)}"
-                        },
-                        modifier = Modifier.padding(start = 15.dp, bottom = 15.dp)
-                            .imePadding(),
+                        text =
+                            rememberSaveable(noteScreenVM.note.lastModified) {
+                                "Last saved on ${epochToReadableDateTime(noteScreenVM.note.lastModified)}"
+                            },
+                        modifier = Modifier.padding(start = 15.dp, bottom = 15.dp).imePadding(),
                         color = MaterialTheme.colorScheme.secondary,
-                        style = MaterialTheme.typography.titleSmall
+                        style = MaterialTheme.typography.titleSmall,
                     )
                 }
             }
-            if (platform == Platform.AndroidMobile) return@Row
+            if (platform.type == Platform.Type.AndroidMobile) return@Row
 
             VerticalDivider(
-                modifier = Modifier.fillMaxHeight().padding(start = 7.5.dp)
+                modifier = Modifier.fillMaxHeight().padding(start = 7.5.dp),
             )
             SuggestionsList(
                 onAcceptAll = {
                     noteScreenVM.onAction(
-                        noteScreenAction = NoteScreenAction.AcceptAllSuggestions
+                        noteScreenAction = NoteScreenAction.AcceptAllSuggestions,
                     )
                 },
                 suggestions = suggestions.data,
-                onAddToDictionary = {},
+                onAddToDictionary = {
+                    noteScreenVM.onAction(
+                        NoteScreenAction.AddStringToDictionary(it.suggestion.errorSequence),
+                    )
+                },
                 onSuggestionAccept = { limaeNotesIndex, suggestionNoteIndex ->
                     noteScreenVM.onAction(
                         NoteScreenAction.OnSuggestionAccept(
                             limaeNotesIndex,
-                            suggestionNoteIndex
-                        )
+                            suggestionNoteIndex,
+                        ),
                     )
-                }
+                },
             )
         }
     }
@@ -221,35 +237,41 @@ fun SuggestionsList(
     showStickyHeader: Boolean = true,
     onAddToDictionary: (LimaeSuggestionBundle) -> Unit,
     onSuggestionAccept: (LimaeNotesIndex, SuggestionNoteIndex) -> Unit,
-    onAcceptAll: () -> Unit
+    onAcceptAll: () -> Unit,
 ) {
+    val dictStringsLookup =
+        retain {
+            mutableStateSetOf<String>()
+        }
     LazyColumn(modifier = modifier) {
         if (showStickyHeader) {
             stickyHeader {
                 Column(
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface).fillMaxWidth()
+                    modifier =
+                        Modifier
+                            .background(MaterialTheme.colorScheme.surface)
+                            .fillMaxWidth(),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth().padding(15.dp)
+                        modifier = Modifier.fillMaxWidth().padding(15.dp),
                     ) {
                         Text(
                             text = "Suggestions",
                             style = MaterialTheme.typography.titleLarge,
                             fontSize = 24.sp,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.fillMaxWidth(0.75f)
-                                .padding(start = 5.dp)
+                            modifier = Modifier.fillMaxWidth(0.75f).padding(start = 5.dp),
                         )
                         FilledTonalIconButton(
                             enabled = !suggestions.isEmpty(),
                             modifier = Modifier.showHandOnHover(),
-                            onClick = onAcceptAll
+                            onClick = onAcceptAll,
                         ) {
                             Icon(
                                 imageVector = Icons.DoneAll,
-                                contentDescription = "Apply all the edits"
+                                contentDescription = "Apply all the edits",
                             )
                         }
                     }
@@ -261,9 +283,10 @@ fun SuggestionsList(
         }
         item {
             Spacer(
-                modifier = Modifier.height(
-                    if (platform == Platform.AndroidMobile) 15.dp else 0.dp
-                )
+                modifier =
+                    Modifier.height(
+                        if (platform.type == Platform.Type.AndroidMobile) 15.dp else 0.dp,
+                    ),
             )
         }
         if (suggestions.isEmpty()) {
@@ -276,11 +299,16 @@ fun SuggestionsList(
                 )
             }
         }
-        itemsIndexed(suggestions) { index, suggestion ->
+        itemsIndexed(suggestions, key = { _, suggestion ->
+            "Suggestion-${suggestion.suggestion.refId}"
+        }) { index, suggestion ->
+            if (dictStringsLookup.contains(suggestion.suggestion.errorSequence)) return@itemsIndexed
+
             SuggestionNote(
                 limaeSuggestionBundle = suggestion,
                 onAddToDictionary = {
                     onAddToDictionary(suggestion)
+                    dictStringsLookup.add(suggestion.suggestion.errorSequence)
                 },
                 onSuggestionAccept = {
                     onSuggestionAccept(index, it)
@@ -289,9 +317,10 @@ fun SuggestionsList(
         }
         item {
             Spacer(
-                modifier = Modifier.height(
-                    if (platform == Platform.AndroidMobile) 15.dp else 250.dp
-                )
+                modifier =
+                    Modifier.height(
+                        if (platform.type == Platform.Type.AndroidMobile) 15.dp else 250.dp,
+                    ),
             )
         }
     }

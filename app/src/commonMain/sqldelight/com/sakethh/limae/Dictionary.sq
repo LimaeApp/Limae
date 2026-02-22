@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS Dictionary (
+    string TEXT NOT NULL UNIQUE,
+    id TEXT PRIMARY KEY,
+    CHECK(trim(string) <> '' AND trim(id) <> '')
+);
+
+addStringToDictionary:
+INSERT OR IGNORE INTO Dictionary(string,id) VALUES (:string,:id);
+
+getAllStrings:
+SELECT * FROM Dictionary;
+
+deleteAString:
+DELETE FROM Dictionary WHERE id = :id;

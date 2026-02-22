@@ -60,6 +60,9 @@ kotlin {
             api(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
         }
 
         commonTest.dependencies {
@@ -82,12 +85,21 @@ kotlin {
 
 android {
     namespace = "com.sakethh.limae"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk =
+        libs.versions.android.compileSdk
+            .get()
+            .toInt()
 
     defaultConfig {
         applicationId = "com.sakethh.limae"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        minSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
+        targetSdk =
+            libs.versions.android.targetSdk
+                .get()
+                .toInt()
         versionCode = 1
         versionName = "1.0"
     }
@@ -143,15 +155,9 @@ tasks.withType<JavaExec>().configureEach {
     }
 }
 
-
-
 sqldelight {
     databases.create("LimaeDatabase") {
         packageName.set("com.sakethh.limae")
-        deriveSchemaFromMigrations.set(true)
-        verifyMigrations.set(true)
         generateAsync.set(true)
     }
 }
-
-

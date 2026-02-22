@@ -17,6 +17,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -72,7 +73,9 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                     contentDescription = "Search Icon button to open the search bar"
                 )
             }
-            IconButton(modifier = Modifier.showHandOnHover(), onClick = {}) {
+            IconButton(modifier = Modifier.showHandOnHover(), onClick = {
+                takeAction(LimaeAction.Navigate(destination = NavRoute.Settings))
+            }) {
                 Icon(
                     imageVector = Icons.Settings,
                     contentDescription = "Settings Icon button to navigate to the settings screen"
@@ -112,7 +115,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                         }.showHandOnHover()
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.padding(top = 15.dp).fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -124,8 +127,6 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                                 modifier = Modifier.padding(
                                     start = 15.dp,
                                     end = 15.dp,
-                                    top = 15.dp,
-                                    bottom = 5.dp
                                 ),
                                 maxLines = 3,
                                 overflow = TextOverflow.Ellipsis,
@@ -136,7 +137,6 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                                 fontSize = 16.sp,
                                 modifier = Modifier.padding(
                                     start = 15.dp,
-                                    bottom = 15.dp,
                                     end = 15.dp
                                 ),
                                 maxLines = 5,
@@ -157,12 +157,13 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                             )
                         }
                     }
+                    HorizontalDivider(modifier = Modifier.padding(15.dp).fillMaxWidth())
                     Text(
                         text = rememberSaveable(note.lastModified) {
                             epochToReadableDateTime(note.lastModified).toString()
                         },
                         style = MaterialTheme.typography.titleSmall,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         modifier = Modifier.padding(
                             start = 15.dp,
                             bottom = 15.dp,
@@ -170,7 +171,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                         ),
                         maxLines = 5,
                         overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = MaterialTheme.colorScheme.secondary.copy(0.75f)
                     )
                 }
             }

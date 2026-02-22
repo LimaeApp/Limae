@@ -17,66 +17,63 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalUuidApi::class)
 class NotesRepoImpl(
     private val noteQueries: NoteQueries,
-    private val limaeDispatchers: LimaeDispatchers
+    private val limaeDispatchers: LimaeDispatchers,
 ) : NotesRepo {
-
-    override suspend fun deleteANoteById(id: String): Result<Unit> {
-        return runSafe {
+    override suspend fun deleteANoteById(id: String): Result<Unit> =
+        runSafe {
             withContext(limaeDispatchers.IO) {
                 noteQueries.deleteANoteById(id)
             }
         }
-    }
 
     override suspend fun insertANote(
         title: String,
-        content: String
-    ): Result<Pair<String, Long>> {
-        return runSafe {
+        content: String,
+    ): Result<Pair<String, Long>> =
+        runSafe {
             val noteId = getRandomUUIDv7()
             val eventTimestamp = getEpochSecond()
             withContext(limaeDispatchers.IO) {
-                noteQueries.insertANote(
-                    id = noteId,
-                    title = title,
-                    content = content,
-                    lastModified = eventTimestamp
-                )
+                noteQueries
+                    .insertANote(
+                        id = noteId,
+                        title = title,
+                        content = content,
+                        lastModified = eventTimestamp,
+                    )
             }
             noteId to eventTimestamp
         }
-    }
 
     override suspend fun updateANoteById(
         id: String,
         title: String,
-        content: String
+        content: String,
     ): Result<Long> {
         val eventTimestamp = getEpochSecond()
         return runSafe {
             withContext(limaeDispatchers.IO) {
-                noteQueries.updateANoteById(
-                    title = title,
-                    content = content,
-                    lastModified = eventTimestamp,
-                    id = id
-                )
+                noteQueries
+                    .updateANoteById(
+                        title = title,
+                        content = content,
+                        lastModified = eventTimestamp,
+                        id = id,
+                    )
             }
             eventTimestamp
         }
     }
 
-    override suspend fun getANoteById(id: String): Result<Note> {
-        return runSafe {
+    override suspend fun getANoteById(id: String): Result<Note> =
+        runSafe {
             withContext(limaeDispatchers.IO) {
-                noteQueries.getANoteById(
-                    id = id
-                ).executeAsOne()
+                noteQueries
+                    .getANoteById(
+                        id = id,
+                    ).executeAsOne()
             }
         }
-    }
 
-    override fun getAllNotes(): Flow<List<Note>> {
-        return noteQueries.getAllNotes().asFlow().mapToList(limaeDispatchers.IO)
-    }
+    override fun getAllNotes(): Flow<List<Note>> = noteQueries.getAllNotes().asFlow().mapToList(limaeDispatchers.IO)
 }

@@ -5,6 +5,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.Color
+import com.sakethh.limae.platform.Platform
+import com.sakethh.limae.platform.dynamicDarkTheme
+import com.sakethh.limae.platform.dynamicLightTheme
+import com.sakethh.limae.platform.platform
+import com.sakethh.limae.utils.LimaePreferences
 
 
 private val lightScheme = lightColorScheme(
@@ -238,18 +245,46 @@ private val highContrastDarkColorScheme = darkColorScheme(
 
 @Composable
 fun LimaeTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {/*
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }*/
+    val darkColors = darkScheme.copy(
+        background = if (LimaePreferences.useAmoledTheme) Color(0xFF000000) else darkScheme.background,
+        surface = if (LimaePreferences.useAmoledTheme) Color(0xFF000000) else darkScheme.surface
+    )
+    val onAndroid = rememberSaveable {
+        platform.type == Platform.Type.AndroidMobile || platform.type == Platform.Type.AndroidTablet
+    }
+    val platformVersion = platform.version
+    val dynamicDarkTheme = dynamicDarkTheme()
+    val dynamicLightTheme = dynamicLightTheme()
+    val colorScheme = when {
+        LimaePreferences.useDynamicTheming && platformVersion != null && platformVersion >= 31 && onAndroid -> {
+            if (LimaePreferences.useSystemTheme) {
+                if (isSystemInDarkTheme()) dynamicDarkTheme.copy(
+                    background = if (LimaePreferences.useAmoledTheme) Color(
+                        0xFF000000
+                    ) else dynamicDarkTheme.background,
+                    surface = if (LimaePreferences.useAmoledTheme) Color(
+                        0xFF000000
+                    ) else dynamicDarkTheme.surface
+                ) else dynamicLightTheme
+            } else {
+                if (LimaePreferences.useDarkTheme) dynamicDarkTheme.copy(
+                    background = if (LimaePreferences.useAmoledTheme) Color(
+                        0xFF000000
+                    ) else dynamicDarkTheme.background,
+                    surface = if (LimaePreferences.useAmoledTheme) Color(
+                        0xFF000000
+                    ) else dynamicDarkTheme.surface
+                ) else dynamicLightTheme
+            }
+        }
 
-        darkTheme -> darkScheme
-        else -> lightScheme
+        else -> if (LimaePreferences.useSystemTheme) {
+            if (isSystemInDarkTheme()) darkColors else lightScheme
+        } else {
+            if (LimaePreferences.useDarkTheme) darkColors else lightScheme
+        }
     }
 
     MaterialTheme(

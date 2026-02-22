@@ -8,5 +8,8 @@ sealed interface NavRoute {
     data object Home: NavRoute
 
     @Serializable
+    data object Settings: NavRoute
+
+    @Serializable
     data class Note(val noteId: String?): NavRoute
 }

@@ -13,6 +13,7 @@ import androidx.navigation.toRoute
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.navigation.NavRoute
+import com.sakethh.limae.ui.screens.settings.SettingsScreen
 import com.sakethh.limae.ui.screens.home.HomeScreen
 import com.sakethh.limae.ui.screens.note.NoteScreen
 
@@ -37,7 +38,7 @@ fun Limae() {
         }
         NavHost(
             navController = navController,
-            startDestination = if (platform == Platform.Web) NavRoute.Note(noteId = null) else NavRoute.Home
+            startDestination = if (platform.type == Platform.Type.Web) NavRoute.Note(noteId = null) else NavRoute.Home
         ) {
             composable<NavRoute.Home> {
                 HomeScreen(takeAction = {
@@ -52,6 +53,11 @@ fun Limae() {
                     },
                     noteId = note.noteId,
                 )
+            }
+            composable<NavRoute.Settings> {
+                SettingsScreen(performAction = {
+                    takeAction(it)
+                })
             }
         }
     }

@@ -1,5 +1,13 @@
 package com.sakethh.limae.platform
 
-enum class Platform {
-    AndroidMobile, AndroidTablet, Desktop, Web
+interface Platform {
+    val version: Int?
+    val type: Type
+
+    enum class Type {
+        AndroidMobile,
+        AndroidTablet,
+        Desktop,
+        Web
+    }
 }

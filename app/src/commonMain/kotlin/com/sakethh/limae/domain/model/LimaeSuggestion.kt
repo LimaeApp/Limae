@@ -7,9 +7,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Stable
 data class LimaeSuggestion(
+    val refId: String,
+    val errorSequence: String,
     val startIndex: Int,
     val endIndex: Int,
     val message: String,
     val suggestions: List<String> = emptyList(),
-    val kind: LintKind = LintKind.LimaeNull
+    val kind: LintKind = LintKind.LimaeNull,
 )

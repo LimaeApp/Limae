@@ -75,6 +75,7 @@ fun AccessibilitySuggestionsSheet(
                 showStickyHeader = false,
                 onAddToDictionary = onAddToDictionary,
                 onSuggestionAccept = onSuggestionAccept,
+                onAcceptAll = {},
             )
         }
     }
@@ -83,7 +84,7 @@ fun AccessibilitySuggestionsSheet(
 @Composable
 @Preview
 private fun AccessibilitySuggestionsSheetPreview() {
-    LimaeTheme(darkTheme = true) {
+    LimaeTheme {
         AccessibilitySuggestionsSheet({}, persistentListOf(), {}, { _, _ -> })
     }
 }

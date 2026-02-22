@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.sakethh.limae.Note
 import com.sakethh.limae.domain.SuggestionEngine
 import com.sakethh.limae.domain.model.LimaeSuggestionBundle
+import com.sakethh.limae.domain.onFailure
 import com.sakethh.limae.domain.onSuccess
 import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
@@ -36,25 +37,28 @@ class NoteScreenVM(
     private val suggestionsRepo: SuggestionsRepo,
     private val sourceNoteId: String?,
     private val notesRepo: NotesRepo,
-    registerListeningToSuggestions: Boolean
+    registerListeningToSuggestions: Boolean,
 ) : ViewModel() {
-
     var note by mutableStateOf(
         Note(
             id = "",
             title = "",
             content = "",
-            lastModified = 0
-        )
+            lastModified = 0,
+        ),
     )
         private set
 
     private var grammarCheckJob: Job? = null
-    private val _suggestions = MutableStateFlow(
-        ItemState<PersistentList<LimaeSuggestionBundle>>(
-            isError = false, errorMessage = null, isLoading = false, data = persistentListOf()
+    private val _suggestions =
+        MutableStateFlow(
+            ItemState<PersistentList<LimaeSuggestionBundle>>(
+                isError = false,
+                errorMessage = null,
+                isLoading = false,
+                data = persistentListOf(),
+            ),
         )
-    )
     val suggestions = _suggestions.asStateFlow()
 
     private val isEmittedFromTitle = AtomicBoolean(true)
@@ -63,91 +67,110 @@ class NoteScreenVM(
     // a boolean would have been enough
     private val pauseSuggestions = Mutex(locked = false)
 
-    private fun getSuggestionValue(suggestion: String, engine: SuggestionEngine): String {
-        return if (engine == SuggestionEngine.Harper)
-            suggestion.substringAfter(
-                "“"
-            ).substringBeforeLast("”") else suggestion
-    }
+    private fun getSuggestionValue(
+        suggestion: String,
+        engine: SuggestionEngine,
+    ): String =
+        if (engine == SuggestionEngine.Harper) {
+            suggestion
+                .substringAfter(
+                    "“",
+                ).substringBeforeLast("”")
+        } else {
+            suggestion
+        }
 
     private fun applySuggestionToNote(
         replacementText: String,
         engine: SuggestionEngine,
         startIndex: Int,
-        endIndex: Int
+        endIndex: Int,
     ) {
-        val replacementText = replacementText.run {
-            getSuggestionValue(
-                suggestion = replacementText,
-                engine = engine
-            )
-        }
+        val replacementText =
+            replacementText.run {
+                getSuggestionValue(
+                    suggestion = replacementText,
+                    engine = engine,
+                )
+            }
 
         runSafe {
             if (isEmittedFromTitle.load()) {
-                note = note.run {
-                    copy(
-                        title = title.replaceRange(
-                            startIndex = startIndex,
-                            endIndex = endIndex,
-                            replacement = replacementText
+                note =
+                    note.run {
+                        copy(
+                            title =
+                                title.replaceRange(
+                                    startIndex = startIndex,
+                                    endIndex = endIndex,
+                                    replacement = replacementText,
+                                ),
                         )
-                    )
-                }
+                    }
             } else {
-                note = note.run {
-                    copy(
-                        content = content.replaceRange(
-                            startIndex = startIndex,
-                            endIndex = endIndex,
-                            replacement = replacementText
+                note =
+                    note.run {
+                        copy(
+                            content =
+                                content.replaceRange(
+                                    startIndex = startIndex,
+                                    endIndex = endIndex,
+                                    replacement = replacementText,
+                                ),
                         )
-                    )
-                }
+                    }
             }
         }
     }
 
     fun onAction(noteScreenAction: NoteScreenAction) {
         when (noteScreenAction) {
-            is NoteScreenAction.OnContentChange -> note =
-                note.copy(content = noteScreenAction.newContent)
+            is NoteScreenAction.OnContentChange -> {
+                note =
+                    note.copy(content = noteScreenAction.newContent)
+            }
 
-            is NoteScreenAction.OnTitleChange -> note = note.copy(title = noteScreenAction.newTitle)
+            is NoteScreenAction.OnTitleChange -> {
+                note = note.copy(title = noteScreenAction.newTitle)
+            }
+
             is NoteScreenAction.OnSuggestionAccept -> {
                 val limaeSuggestionBundle = suggestions.value.data[noteScreenAction.limaeNotesIndex]
                 applySuggestionToNote(
                     replacementText = limaeSuggestionBundle.suggestion.suggestions[noteScreenAction.suggestionNoteIndex],
                     engine = limaeSuggestionBundle.engine,
                     startIndex = limaeSuggestionBundle.suggestion.startIndex,
-                    endIndex = limaeSuggestionBundle.suggestion.endIndex
+                    endIndex = limaeSuggestionBundle.suggestion.endIndex,
                 )
             }
 
             is NoteScreenAction.SaveNote -> {
-                viewModelScope.launch {
-                    if (lastInsertedId == null && noteScreenAction.noteId == null) {
-                        notesRepo.insertANote(
-                            title = noteScreenAction.title,
-                            content = noteScreenAction.content
-                        ).onSuccess { result ->
-                            val (insertedNoteId, eventTimestamp) = result.data
-                            lastInsertedId = insertedNoteId
-                            note = note.copy(lastModified = eventTimestamp)
+                viewModelScope
+                    .launch {
+                        if (lastInsertedId == null && noteScreenAction.noteId == null) {
+                            notesRepo
+                                .insertANote(
+                                    title = noteScreenAction.title,
+                                    content = noteScreenAction.content,
+                                ).onSuccess { result ->
+                                    val (insertedNoteId, eventTimestamp) = result.data
+                                    lastInsertedId = insertedNoteId
+                                    note = note.copy(lastModified = eventTimestamp)
+                                }
+                        } else {
+                            notesRepo
+                                .updateANoteById(
+                                    id = noteScreenAction.noteId ?: lastInsertedId!!,
+                                    title = noteScreenAction.title,
+                                    content = noteScreenAction.content,
+                                ).onSuccess { result ->
+                                    val eventTimestamp = result.data
+                                    note = note.copy(lastModified = eventTimestamp)
+                                }
                         }
-                    } else {
-                        notesRepo.updateANoteById(
-                            id = noteScreenAction.noteId ?: lastInsertedId!!,
-                            title = noteScreenAction.title,
-                            content = noteScreenAction.content
-                        ).onSuccess { result ->
-                            val eventTimestamp = result.data
-                            note = note.copy(lastModified = eventTimestamp)
-                        }
+                    }.invokeOnCompletion {
+                        noteScreenAction.onCompletion()
                     }
-                }.invokeOnCompletion {
-                    noteScreenAction.onCompletion()
-                }
             }
 
             is NoteScreenAction.AcceptAllSuggestions -> {
@@ -159,9 +182,14 @@ class NoteScreenVM(
                     }
                 }
             }
+
+            is NoteScreenAction.AddStringToDictionary -> {
+                viewModelScope.launch {
+                    suggestionsRepo.addStringToDictionary(noteScreenAction.string)
+                }
+            }
         }
     }
-
 
     init {
         viewModelScope.launch {
@@ -172,40 +200,47 @@ class NoteScreenVM(
             }
         }
         if (registerListeningToSuggestions) {
-            grammarCheckJob = viewModelScope.launch(Dispatchers.Default) {
-                launch {
-                    snapshotFlow {
-                        note.title
-                    }.transform {
-                        if (!pauseSuggestions.isLocked) {
-                            emit(it)
+            grammarCheckJob =
+                viewModelScope.launch(Dispatchers.Default) {
+                    launch {
+                        snapshotFlow {
+                            note.title
+                        }.transform {
+                            if (!pauseSuggestions.isLocked) {
+                                emit(it)
+                            }
+                        }.collectLatest { rawString ->
+                            isEmittedFromTitle.store(true)
+                            _suggestions.onLoading()
+                            suggestionsRepo
+                                .getSuggestions(rawString)
+                                .onSuccess { (suggestionBundles) ->
+                                    _suggestions.onSuccess(suggestionBundles)
+                                }.onFailure(
+                                    _suggestions::onFailure,
+                                )
                         }
-                    }.collectLatest {
-                        isEmittedFromTitle.store(true)
-                        _suggestions.onLoading()
-                        suggestionsRepo.getSuggestions(it).onSuccess(_suggestions::onSuccess)
-                            .onFailure(
-                                _suggestions::onFailure
-                            )
+                    }
+                    launch {
+                        snapshotFlow {
+                            note.content
+                        }.transform {
+                            if (!pauseSuggestions.isLocked) {
+                                emit(it)
+                            }
+                        }.collectLatest { rawString ->
+                            isEmittedFromTitle.store(false)
+                            _suggestions.onLoading()
+                            suggestionsRepo
+                                .getSuggestions(rawString)
+                                .onSuccess { (suggestionBundles) ->
+                                    _suggestions.onSuccess(suggestionBundles)
+                                }.onFailure(
+                                    _suggestions::onFailure,
+                                )
+                        }
                     }
                 }
-                launch {
-                    snapshotFlow {
-                        note.content
-                    }.transform {
-                        if (!pauseSuggestions.isLocked) {
-                            emit(it)
-                        }
-                    }.collectLatest {
-                        isEmittedFromTitle.store(false)
-                        _suggestions.onLoading()
-                        suggestionsRepo.getSuggestions(it).onSuccess(_suggestions::onSuccess)
-                            .onFailure(
-                                _suggestions::onFailure
-                            )
-                    }
-                }
-            }
         } else {
             grammarCheckJob?.cancel() // there will be no Job when it reaches here. but aight.
         }

@@ -1,5 +1,8 @@
 package com.sakethh.limae.ui.screens.note
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -186,15 +189,21 @@ fun NoteScreen(
                 }
                 if (platform.type == Platform.Type.Web) return@LazyColumn
                 item {
-                    Text(
-                        text =
-                            rememberSaveable(noteScreenVM.note.lastModified) {
-                                "Last saved on ${epochToReadableDateTime(noteScreenVM.note.lastModified)}"
-                            },
-                        modifier = Modifier.padding(start = 15.dp, bottom = 15.dp).imePadding(),
-                        color = MaterialTheme.colorScheme.secondary,
-                        style = MaterialTheme.typography.titleSmall,
-                    )
+                    AnimatedVisibility(
+                        noteScreenVM.note.id != "",
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Text(
+                            text =
+                                rememberSaveable(noteScreenVM.note.lastModified) {
+                                    "Last saved on ${epochToReadableDateTime(noteScreenVM.note.lastModified)}"
+                                },
+                            modifier = Modifier.padding(start = 15.dp, bottom = 15.dp).imePadding(),
+                            color = MaterialTheme.colorScheme.secondary,
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
                 }
             }
             if (platform.type == Platform.Type.AndroidMobile) return@Row

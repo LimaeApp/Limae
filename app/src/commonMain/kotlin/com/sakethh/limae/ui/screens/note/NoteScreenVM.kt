@@ -153,9 +153,16 @@ class NoteScreenVM(
                                     title = noteScreenAction.title,
                                     content = noteScreenAction.content,
                                 ).onSuccess { result ->
-                                    val (insertedNoteId, eventTimestamp) = result.data
-                                    lastInsertedId = insertedNoteId
-                                    note = note.copy(lastModified = eventTimestamp)
+                                    val (insertedRowId, rowInsertionCount, eventTimestamp) = result.data
+
+                                    if (rowInsertionCount == (0).toLong()) return@onSuccess
+
+                                    lastInsertedId = insertedRowId
+                                    note =
+                                        note.copy(
+                                            id = insertedRowId,
+                                            lastModified = eventTimestamp,
+                                        )
                                 }
                         } else {
                             notesRepo

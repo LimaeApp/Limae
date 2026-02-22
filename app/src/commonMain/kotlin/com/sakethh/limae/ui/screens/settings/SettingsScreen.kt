@@ -1,5 +1,8 @@
 package com.sakethh.limae.ui.screens.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -248,17 +251,29 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                 }
             }
             item {
-                Text(
-                    text = "Added Strings",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 15.dp, end = 15.dp),
-                    fontSize = 16.sp,
-                )
+                AnimatedVisibility(
+                    dictionaryStrings.isNotEmpty(),
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    Text(
+                        text = "Added Strings",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 15.dp, end = 15.dp),
+                        fontSize = 16.sp,
+                    )
+                }
             }
-            items(dictionaryStrings) { dictItem ->
+            items(dictionaryStrings, key = {
+                it.id
+            }) { dictItem ->
                 Row(
-                    modifier = Modifier.padding(top = 7.5.dp, bottom = 7.5.dp).fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .padding(top = 7.5.dp, bottom = 7.5.dp)
+                            .fillMaxWidth()
+                            .animateItem(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {

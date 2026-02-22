@@ -4,8 +4,11 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.sakethh.limae.Note
 import com.sakethh.limae.NoteQueries
+import com.sakethh.limae.domain.EventTimestamp
+import com.sakethh.limae.domain.InsertedRowId
 import com.sakethh.limae.domain.LimaeDispatchers
 import com.sakethh.limae.domain.Result
+import com.sakethh.limae.domain.RowInsertionCount
 import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.utils.getEpochSecond
 import com.sakethh.limae.utils.getRandomUUIDv7
@@ -29,20 +32,25 @@ class NotesRepoImpl(
     override suspend fun insertANote(
         title: String,
         content: String,
-    ): Result<Pair<String, Long>> =
+    ): Result<Triple<InsertedRowId, RowInsertionCount, EventTimestamp>> =
         runSafe {
             val noteId = getRandomUUIDv7()
             val eventTimestamp = getEpochSecond()
-            withContext(limaeDispatchers.IO) {
-                noteQueries
-                    .insertANote(
-                        id = noteId,
-                        title = title,
-                        content = content,
-                        lastModified = eventTimestamp,
-                    )
-            }
-            noteId to eventTimestamp
+            val insertionCount =
+                withContext(limaeDispatchers.IO) {
+                    noteQueries
+                        .insertANote(
+                            id = noteId,
+                            title = title,
+                            content = content,
+                            lastModified = eventTimestamp,
+                        )
+                }
+            Triple(
+                first = noteId,
+                second = insertionCount,
+                third = eventTimestamp,
+            )
         }
 
     override suspend fun updateANoteById(

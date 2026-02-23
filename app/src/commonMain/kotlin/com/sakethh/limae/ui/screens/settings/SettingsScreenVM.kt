@@ -30,15 +30,21 @@ class SettingsScreenVM(
                 }
             }
 
-            is SettingsScreenAction.AddAStringToDictionary -> {
+            is SettingsScreenAction.AddStringsToDictionary -> {
                 viewModelScope
                     .launch {
-                        suggestionsRepo.addStringToDictionary(
-                            string = settingsScreenAction.string,
+                        suggestionsRepo.addStringsToDictionary(
+                            customStrings = settingsScreenAction.string.split("\n"),
                         )
                     }.invokeOnCompletion {
                         settingsScreenAction.onCompletion()
                     }
+            }
+
+            is SettingsScreenAction.DeleteAllStringsFromDictionary -> {
+                viewModelScope.launch {
+                    suggestionsRepo.deleteAllStringsFromDictionary()
+                }
             }
         }
     }

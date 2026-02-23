@@ -17,15 +17,20 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -78,6 +83,10 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
         }
     val settingsScreenVM: SettingsScreenVM = koinViewModel()
     val dictionaryStrings by settingsScreenVM.dictionaryStrings.collectAsStateWithLifecycle()
+    val isDictEmpty = dictionaryStrings.isEmpty()
+    var showDeleteDialogBox by rememberSaveable {
+        mutableStateOf(false)
+    }
     Scaffold(topBar = {
         LargeTopAppBar(title = {
             Text(
@@ -233,20 +242,46 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         modifier = Modifier.padding(start = 15.dp, end = 15.dp, bottom = 7.5.dp),
                         fontSize = 15.sp,
                     )
-                    FilledTonalIconButton(
+                    FilledTonalButton(
                         onClick = {
                             showNewCustomStringForDictBtmSheet = true
                         },
                         modifier =
                             Modifier
-                                .padding(start = 15.dp, end = 15.dp, bottom = 15.dp)
+                                .padding(start = 15.dp, end = 15.dp)
                                 .fillMaxWidth()
                                 .showHandOnHover(),
                     ) {
                         Text(
-                            text = "Add a new string to dictionary",
+                            text = "Add strings to dictionary",
                             style = MaterialTheme.typography.titleSmall,
                         )
+                    }
+                    AnimatedVisibility(
+                        !isDictEmpty,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        FilledTonalButton(
+                            colors =
+                                ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                ),
+                            onClick = {
+                                showDeleteDialogBox = true
+                            },
+                            modifier =
+                                Modifier
+                                    .padding(start = 15.dp, end = 15.dp, bottom = 15.dp)
+                                    .fillMaxWidth()
+                                    .showHandOnHover(),
+                        ) {
+                            Text(
+                                text = "Delete all strings from dictionary",
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                        }
                     }
                 }
             }
@@ -321,12 +356,56 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                 showNewCustomStringForDictBtmSheet = false
             }
     }
+
+    if (showDeleteDialogBox) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteDialogBox = false
+            },
+            confirmButton = {
+                Button(
+                    modifier = Modifier.showHandOnHover().fillMaxWidth(),
+                    onClick = {
+                        settingsScreenVM.performAction(SettingsScreenAction.DeleteAllStringsFromDictionary)
+                        showDeleteDialogBox = false
+                    },
+                ) {
+                    Text(
+                        text = "Delete All",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    modifier = Modifier.showHandOnHover().fillMaxWidth(),
+                    onClick = { showDeleteDialogBox = false },
+                ) {
+                    Text(
+                        text = "Cancel",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = "Do you really want to delete all the custom strings?",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 24.sp,
+                )
+            },
+        )
+    }
+
     if (showNewCustomStringForDictBtmSheet) {
         var newString by rememberSaveable {
             mutableStateOf("")
         }
         ModalBottomSheet(
-            modifier = Modifier.imePadding().navigationBarsPadding(),
+            modifier =
+                Modifier
+                    .imePadding()
+                    .navigationBarsPadding(),
             onDismissRequest = hideBtmSheet,
             sheetState = newCustomStringInDictBtmSheet,
         ) {
@@ -334,18 +413,25 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                 modifier =
                     Modifier
                         .padding(start = 15.dp, end = 15.dp, bottom = 15.dp)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
             ) {
                 Text(
-                    text = "Add a new string to your dictionary",
+                    text = "Add strings to your dictionary",
                     style = MaterialTheme.typography.titleLarge,
                     fontSize = 24.sp,
+                )
+                Spacer(Modifier.height(5.dp))
+                Text(
+                    text = "Every individual word must be in a new line.",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = 18.sp,
                 )
                 Spacer(Modifier.height(15.dp))
                 TextField(
                     label = {
                         Text(
-                            text = "Custom String",
+                            text = "Custom Strings",
                             style = MaterialTheme.typography.titleSmall,
                         )
                     },
@@ -364,7 +450,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                     onClick = {
                         settingsScreenVM.performAction(
                             settingsScreenAction =
-                                SettingsScreenAction.AddAStringToDictionary(
+                                SettingsScreenAction.AddStringsToDictionary(
                                     string = newString,
                                     onCompletion = hideBtmSheet,
                                 ),
@@ -373,6 +459,15 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                 ) {
                     Text(
                         text = "Add",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+                OutlinedButton(
+                    modifier = Modifier.showHandOnHover().fillMaxWidth(),
+                    onClick = hideBtmSheet,
+                ) {
+                    Text(
+                        text = "Cancel",
                         style = MaterialTheme.typography.titleSmall,
                     )
                 }

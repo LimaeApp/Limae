@@ -192,7 +192,7 @@ class NoteScreenVM(
 
             is NoteScreenAction.AddStringToDictionary -> {
                 viewModelScope.launch {
-                    suggestionsRepo.addStringToDictionary(noteScreenAction.string)
+                    suggestionsRepo.addStringsToDictionary(listOf(noteScreenAction.string))
                 }
             }
         }

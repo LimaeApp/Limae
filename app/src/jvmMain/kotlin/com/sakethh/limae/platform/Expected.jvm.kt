@@ -73,7 +73,6 @@ actual suspend fun platformDatabaseModule(): Module =
     module {
         single {
             val driver: SqlDriver =
-                // TODO: remove hardcoded path
                 JdbcSqliteDriver(url = "jdbc:sqlite:${limaeSpecificFolder.absolutePath}/${Constants.DATABASE_NAME}")
             runBlocking {
                 LimaeDatabase.Schema.create(driver).await()

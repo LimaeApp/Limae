@@ -9,9 +9,11 @@ import kotlinx.coroutines.flow.Flow
 interface SuggestionsRepo {
     suspend fun getSuggestions(text: String): Result<PersistentList<LimaeSuggestionBundle>>
 
-    suspend fun addStringToDictionary(string: String): Result<Unit>
+    suspend fun addStringsToDictionary(customStrings: List<String>): Result<Unit>
 
     suspend fun deleteAnItemFromDictionary(dictionary: Dictionary): Result<Unit>
 
     fun getAllStringsFromDictionary(): Flow<List<Dictionary>>
+
+    suspend fun deleteAllStringsFromDictionary(): Result<Unit>
 }

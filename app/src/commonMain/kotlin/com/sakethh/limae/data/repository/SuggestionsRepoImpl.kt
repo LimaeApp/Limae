@@ -110,14 +110,18 @@ class SuggestionsRepoImpl(
             limaeSuggestionBundles.toPersistentList()
         }
 
-    override suspend fun addStringToDictionary(string: String): Result<Unit> =
+    override suspend fun addStringsToDictionary(customStrings: List<String>): Result<Unit> =
         runSafe {
             withContext(limaeDispatchers.IO) {
-                dictionaryQueries.addStringToDictionary(
-                    string = string,
-                    id = getRandomUUIDv7(),
-                )
-                dictionaryStringsLookup.add(string)
+                dictionaryQueries.transactionWithResult {
+                    customStrings.forEach { customString ->
+                        dictionaryQueries.addStringToDictionary(
+                            string = customString,
+                            id = getRandomUUIDv7(),
+                        )
+                    }
+                }
+                dictionaryStringsLookup.addAll(customStrings)
             }
         }
 
@@ -133,4 +137,9 @@ class SuggestionsRepoImpl(
 
     override fun getAllStringsFromDictionary(): Flow<List<Dictionary>> =
         dictionaryQueries.getAllStrings().asFlow().mapToList(limaeDispatchers.IO)
+
+    override suspend fun deleteAllStringsFromDictionary(): Result<Unit> =
+        runSafe {
+            dictionaryQueries.deleteAll()
+        }
 }

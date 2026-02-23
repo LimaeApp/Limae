@@ -12,3 +12,6 @@ SELECT * FROM Dictionary;
 
 deleteAString:
 DELETE FROM Dictionary WHERE id = :id;
+
+deleteAll:
+DELETE FROM Dictionary;

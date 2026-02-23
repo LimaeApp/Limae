@@ -1,6 +1,5 @@
 package com.sakethh.limae.ui.screens.home
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -145,6 +144,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                                                 ),
                                             children = {
                                                 FilledIconButton(
+                                                    modifier = Modifier.showHandOnHover(),
                                                     colors =
                                                         IconButtonDefaults.iconButtonColors(
                                                             contentColor = MaterialTheme.colorScheme.onTertiary,

@@ -215,6 +215,36 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                     Spacer(modifier = Modifier.height(15.dp))
                 }
             }
+            item {
+                Text(
+                    text = "General",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 15.dp, end = 15.dp, bottom = 15.dp),
+                    fontSize = 16.sp,
+                )
+            }
+            item {
+                SettingComponent(
+                    SettingComponentParam(
+                        title = "Auto-save on writing",
+                        doesDescriptionExists = true,
+                        description = "Limae will auto-save your notes while you're writing with the empty interval of 0.5 seconds during input key strokes.",
+                        isSwitchNeeded = true,
+                        isSwitchEnabled = LimaePreferences.autoSaveNotes,
+                        onSwitchStateChange = {
+                            LimaePreferences.autoSaveNotes =
+                                !LimaePreferences.autoSaveNotes
+                            settingsScreenVM.updatePreference(
+                                preferenceKey = booleanPreferencesKey(LimaePreferences.Key.AUTO_SAVE_NOTE.name),
+                                newValue = LimaePreferences.autoSaveNotes,
+                            )
+                        },
+                        showIcon = false,
+                    ),
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+            }
             stickyHeader {
                 Column(
                     modifier =

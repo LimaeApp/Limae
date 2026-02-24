@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -149,6 +150,8 @@ fun NoteScreen(
     var showSavingLabel by rememberSaveable {
         mutableStateOf(false)
     }
+
+    val localWindowInfo = LocalWindowInfo.current
 
     LaunchedEffect(Unit) {
         snapshotFlow {
@@ -293,7 +296,7 @@ fun NoteScreen(
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .heightIn(max = Constants.COMPONENT_MAX_HEIGHT.dp),
+                                    .heightIn(max = localWindowInfo.containerSize.height.dp),
                             colors = textFieldColors,
                         )
                     }
@@ -318,10 +321,13 @@ fun NoteScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .defaultMinSize(minHeight = 250.dp)
-                                    .heightIn(max = Constants.COMPONENT_MAX_HEIGHT.dp),
+                                    .heightIn(max = localWindowInfo.containerSize.height.dp),
                             colors = textFieldColors,
                         )
                     }
+
+                    // nasir jones is one of the greatest to ever pick up a pen
+
                     if (platform.type == Platform.Type.Web) return@LazyColumn
                     item {
                         AnimatedVisibility(

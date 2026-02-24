@@ -20,6 +20,7 @@ import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.common.KeyEventTunnel
+import com.sakethh.limae.utils.LimaePreferences
 import com.sakethh.limae.utils.onFailure
 import com.sakethh.limae.utils.onLoading
 import com.sakethh.limae.utils.onSuccess
@@ -31,6 +32,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -225,6 +228,18 @@ class NoteScreenVM(
             if (sourceNoteId != null) {
                 notesRepo.getANoteById(sourceNoteId).onSuccess {
                     note = it.data
+                }
+            }
+            if (LimaePreferences.autoSaveNotes) {
+                snapshotFlow {
+                    note
+                }.drop(1).debounce(500L).collectLatest { note ->
+                    saveNote(
+                        noteId = sourceNoteId,
+                        title = note.title,
+                        content = note.content,
+                        onCompletion = {},
+                    )
                 }
             }
         }

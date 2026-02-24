@@ -17,6 +17,8 @@ object LimaePreferences : KoinComponent {
     var useAmoledTheme by mutableStateOf(false)
     var useDynamicTheming by mutableStateOf(false)
 
+    var autoSaveNotes by mutableStateOf(true)
+
     enum class Primitives {
         Int,
         String,
@@ -35,6 +37,7 @@ object LimaePreferences : KoinComponent {
         USE_SYSTEM_THEME(::useSystemTheme, Primitives.Boolean),
         USE_AMOLED_THEME(::useAmoledTheme, Primitives.Boolean),
         USE_DYNAMIC_THEME(::useDynamicTheming, Primitives.Boolean),
+        AUTO_SAVE_NOTE(::autoSaveNotes, Primitives.Boolean),
     }
 
     private val preferencesRepo by inject<PreferencesRepo>()

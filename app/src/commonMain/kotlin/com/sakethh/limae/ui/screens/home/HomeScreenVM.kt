@@ -1,10 +1,15 @@
 package com.sakethh.limae.ui.screens.home
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.ui.common.ItemState
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
@@ -12,10 +17,30 @@ import kotlinx.coroutines.launch
 class HomeScreenVM(
     private val notesRepo: NotesRepo,
 ) : ViewModel() {
+    var searchQuery by mutableStateOf("")
+        private set
+
     val savedNotes =
         notesRepo
             .getAllNotes()
-            .transform { drafts ->
+            .flatMapLatest { notes ->
+                snapshotFlow {
+                    searchQuery
+                }.transform {
+                    if (searchQuery.isBlank()) {
+                        emit(notes)
+                    } else {
+                        emit(
+                            notes.filter { note ->
+                                note.title.contains(searchQuery.trim()) ||
+                                    note.content.contains(
+                                        searchQuery.trim(),
+                                    )
+                            },
+                        )
+                    }
+                }
+            }.transform { drafts ->
                 emit(
                     ItemState(
                         isError = false,
@@ -43,6 +68,10 @@ class HomeScreenVM(
                     id = homeScreenAction.noteId,
                     onCompletion = homeScreenAction.onCompletion,
                 )
+            }
+
+            is HomeScreenAction.UpdateSearchQuery -> {
+                searchQuery = homeScreenAction.string
             }
         }
     }

@@ -4,6 +4,7 @@ package com.sakethh.limae.ui.screens.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,15 +32,22 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -54,6 +62,7 @@ import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.ui.navigation.NavRoute
 import com.sakethh.limae.utils.epochToReadableDateTime
+import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +72,22 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
     val homeScreenVM: HomeScreenVM = koinViewModel()
 
     val savedNotes by homeScreenVM.savedNotes.collectAsStateWithLifecycle()
+
+    var showSearchBar by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val searchBarFocusRequester =
+        retain {
+            FocusRequester()
+        }
+
+    LaunchedEffect(showSearchBar) {
+        if (showSearchBar) {
+            delay(150L)
+            searchBarFocusRequester.requestFocus()
+        }
+    }
 
     Scaffold(topBar = {
         LargeTopAppBar(title = {
@@ -81,12 +106,58 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                     .background(
                         FloatingActionButtonDefaults.containerColor,
                     ).padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(modifier = Modifier.showHandOnHover(), onClick = {}) {
-                Icon(
-                    imageVector = Icons.Search,
-                    contentDescription = "Search Icon button to open the search bar",
-                )
+            AnimatedContent(showSearchBar) { _showSearchBar ->
+                if (_showSearchBar) {
+                    OutlinedTextField(
+                        shape = RoundedCornerShape(50.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(0.625f)
+                                .padding(start = 2.5.dp)
+                                .focusRequester(searchBarFocusRequester),
+                        textStyle = MaterialTheme.typography.titleSmall,
+                        placeholder = {
+                            Text(
+                                text = "Search for title/content of your drafts",
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.basicMarquee(),
+                            )
+                        },
+                        value = homeScreenVM.searchQuery,
+                        onValueChange = {
+                            homeScreenVM.performAction(HomeScreenAction.UpdateSearchQuery(string = it))
+                        },
+                        trailingIcon = {
+                            IconButton(modifier = Modifier.showHandOnHover(), onClick = {
+                                if (homeScreenVM.searchQuery.isNotBlank()) {
+                                    homeScreenVM.performAction(
+                                        HomeScreenAction.UpdateSearchQuery(
+                                            string = "",
+                                        ),
+                                    )
+                                } else {
+                                    showSearchBar = false
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Close,
+                                    contentDescription = "Close Icon button to close the search bar",
+                                )
+                            }
+                        },
+                    )
+                } else {
+                    IconButton(modifier = Modifier.showHandOnHover(), onClick = {
+                        showSearchBar = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Search,
+                            contentDescription = "Search Icon button to open the search bar",
+                        )
+                    }
+                }
             }
             IconButton(modifier = Modifier.showHandOnHover(), onClick = {
                 takeAction(LimaeAction.Navigate(destination = NavRoute.Settings))
@@ -134,65 +205,78 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                             CircularWavyProgressIndicator()
                         }
                     } else if (isDataEmpty) {
-                        Column {
-                            Text(
-                                text = "It's all empty in drafts!",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(top = 75.dp, start = 15.dp),
-                                fontSize = 18.sp,
-                                textAlign = TextAlign.Start,
-                                color = MaterialTheme.colorScheme.tertiary,
-                            )
+                        AnimatedContent(targetState = showSearchBar && homeScreenVM.searchQuery.isNotBlank()) { searchResultsEmpty ->
+                            if (searchResultsEmpty) {
+                                Text(
+                                    text = "No results found.",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(top = 75.dp, start = 15.dp),
+                                    fontSize = 18.sp,
+                                    textAlign = TextAlign.Start,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                )
+                            } else {
+                                Column {
+                                    Text(
+                                        text = "It's all empty in drafts!",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.padding(top = 75.dp, start = 15.dp),
+                                        fontSize = 18.sp,
+                                        textAlign = TextAlign.Start,
+                                        color = MaterialTheme.colorScheme.tertiary,
+                                    )
 
-                            Text(
-                                inlineContent =
-                                    mapOf(
-                                        "AddNoteIcon" to
-                                            InlineTextContent(
-                                                placeholder =
-                                                    Placeholder(
-                                                        width = 36.sp,
-                                                        height = 36.sp,
-                                                        placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
-                                                    ),
-                                                children = {
-                                                    FilledIconButton(
-                                                        modifier = Modifier.showHandOnHover(),
-                                                        colors =
-                                                            IconButtonDefaults.iconButtonColors(
-                                                                contentColor = MaterialTheme.colorScheme.onTertiary,
-                                                                containerColor = MaterialTheme.colorScheme.tertiary,
+                                    Text(
+                                        inlineContent =
+                                            mapOf(
+                                                "AddNoteIcon" to
+                                                    InlineTextContent(
+                                                        placeholder =
+                                                            Placeholder(
+                                                                width = 36.sp,
+                                                                height = 36.sp,
+                                                                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
                                                             ),
-                                                        onClick = {
-                                                            takeAction(
-                                                                LimaeAction.Navigate(
-                                                                    NavRoute.Note(
-                                                                        noteId = null,
+                                                        children = {
+                                                            FilledIconButton(
+                                                                modifier = Modifier.showHandOnHover(),
+                                                                colors =
+                                                                    IconButtonDefaults.iconButtonColors(
+                                                                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                                                                        containerColor = MaterialTheme.colorScheme.tertiary,
                                                                     ),
-                                                                ),
-                                                            )
+                                                                onClick = {
+                                                                    takeAction(
+                                                                        LimaeAction.Navigate(
+                                                                            NavRoute.Note(
+                                                                                noteId = null,
+                                                                            ),
+                                                                        ),
+                                                                    )
+                                                                },
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.AddNotes,
+                                                                    contentDescription = "Add Notes Icon",
+                                                                )
+                                                            }
                                                         },
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.AddNotes,
-                                                            contentDescription = "Add Notes Icon",
-                                                        )
-                                                    }
-                                                },
+                                                    ),
                                             ),
-                                    ),
-                                text =
-                                    buildAnnotatedString {
-                                        append("Click ")
-                                        appendInlineContent(id = "AddNoteIcon")
-                                        append(" to create a new draft.")
-                                    },
-                                style = MaterialTheme.typography.titleSmall,
-                                modifier = Modifier.padding(top = 15.dp, start = 15.dp),
-                                fontSize = 18.sp,
-                                textAlign = TextAlign.Start,
-                                color = MaterialTheme.colorScheme.tertiary,
-                            )
+                                        text =
+                                            buildAnnotatedString {
+                                                append("Click ")
+                                                appendInlineContent(id = "AddNoteIcon")
+                                                append(" to create a new draft.")
+                                            },
+                                        style = MaterialTheme.typography.titleSmall,
+                                        modifier = Modifier.padding(top = 15.dp, start = 15.dp),
+                                        fontSize = 18.sp,
+                                        textAlign = TextAlign.Start,
+                                        color = MaterialTheme.colorScheme.tertiary,
+                                    )
+                                }
+                            }
                         }
                     }
                 }

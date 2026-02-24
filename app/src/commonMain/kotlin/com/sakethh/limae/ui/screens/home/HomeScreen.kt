@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.sakethh.limae.ui.screens.home
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -120,70 +125,79 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                 )
             }
             item(span = StaggeredGridItemSpan.FullLine) {
-                AnimatedVisibility(savedNotes.isEmpty()) {
-                    Column {
-                        Text(
-                            text = "It's all empty in drafts!",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(top = 75.dp, start = 15.dp),
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Start,
-                            color = MaterialTheme.colorScheme.tertiary,
-                        )
+                AnimatedContent(savedNotes.isLoading to savedNotes.data.isEmpty()) { (isLoading, isDataEmpty) ->
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier.padding(top = 100.dp).fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularWavyProgressIndicator()
+                        }
+                    } else if (isDataEmpty) {
+                        Column {
+                            Text(
+                                text = "It's all empty in drafts!",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(top = 75.dp, start = 15.dp),
+                                fontSize = 18.sp,
+                                textAlign = TextAlign.Start,
+                                color = MaterialTheme.colorScheme.tertiary,
+                            )
 
-                        Text(
-                            inlineContent =
-                                mapOf(
-                                    "AddNoteIcon" to
-                                        InlineTextContent(
-                                            placeholder =
-                                                Placeholder(
-                                                    width = 36.sp,
-                                                    height = 36.sp,
-                                                    placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
-                                                ),
-                                            children = {
-                                                FilledIconButton(
-                                                    modifier = Modifier.showHandOnHover(),
-                                                    colors =
-                                                        IconButtonDefaults.iconButtonColors(
-                                                            contentColor = MaterialTheme.colorScheme.onTertiary,
-                                                            containerColor = MaterialTheme.colorScheme.tertiary,
-                                                        ),
-                                                    onClick = {
-                                                        takeAction(
-                                                            LimaeAction.Navigate(
-                                                                NavRoute.Note(
-                                                                    noteId = null,
-                                                                ),
+                            Text(
+                                inlineContent =
+                                    mapOf(
+                                        "AddNoteIcon" to
+                                            InlineTextContent(
+                                                placeholder =
+                                                    Placeholder(
+                                                        width = 36.sp,
+                                                        height = 36.sp,
+                                                        placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
+                                                    ),
+                                                children = {
+                                                    FilledIconButton(
+                                                        modifier = Modifier.showHandOnHover(),
+                                                        colors =
+                                                            IconButtonDefaults.iconButtonColors(
+                                                                contentColor = MaterialTheme.colorScheme.onTertiary,
+                                                                containerColor = MaterialTheme.colorScheme.tertiary,
                                                             ),
+                                                        onClick = {
+                                                            takeAction(
+                                                                LimaeAction.Navigate(
+                                                                    NavRoute.Note(
+                                                                        noteId = null,
+                                                                    ),
+                                                                ),
+                                                            )
+                                                        },
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.AddNotes,
+                                                            contentDescription = "Add Notes Icon",
                                                         )
-                                                    },
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.AddNotes,
-                                                        contentDescription = "Add Notes Icon",
-                                                    )
-                                                }
-                                            },
-                                        ),
-                                ),
-                            text =
-                                buildAnnotatedString {
-                                    append("Click ")
-                                    appendInlineContent(id = "AddNoteIcon")
-                                    append(" to create a new draft.")
-                                },
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.padding(top = 15.dp, start = 15.dp),
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Start,
-                            color = MaterialTheme.colorScheme.tertiary,
-                        )
+                                                    }
+                                                },
+                                            ),
+                                    ),
+                                text =
+                                    buildAnnotatedString {
+                                        append("Click ")
+                                        appendInlineContent(id = "AddNoteIcon")
+                                        append(" to create a new draft.")
+                                    },
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.padding(top = 15.dp, start = 15.dp),
+                                fontSize = 18.sp,
+                                textAlign = TextAlign.Start,
+                                color = MaterialTheme.colorScheme.tertiary,
+                            )
+                        }
                     }
                 }
             }
-            items(savedNotes, key = {
+            items(savedNotes.data, key = {
                 it.id
             }) { note ->
                 Card(

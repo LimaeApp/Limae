@@ -20,3 +20,6 @@ INSERT OR IGNORE INTO Note (id,title, content,lastModified) VALUES (:id,:title,:
 
 updateANoteById:
 UPDATE Note SET title = :title, content = :content, lastModified = :lastModified WHERE id = :id;
+
+deleteAllNotes:
+DELETE FROM Note;

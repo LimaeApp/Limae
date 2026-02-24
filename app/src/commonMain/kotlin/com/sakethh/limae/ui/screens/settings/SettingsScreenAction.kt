@@ -13,4 +13,6 @@ sealed interface SettingsScreenAction {
     ) : SettingsScreenAction
 
     data object DeleteAllStringsFromDictionary : SettingsScreenAction
+
+    data object DeleteAllDrafts : SettingsScreenAction
 }

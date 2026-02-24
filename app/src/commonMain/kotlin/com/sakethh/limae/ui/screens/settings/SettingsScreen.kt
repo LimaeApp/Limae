@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +57,7 @@ import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
+import com.sakethh.limae.ui.common.ConfirmationDialog
 import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.utils.LimaePreferences
 import kotlinx.coroutines.launch
@@ -84,7 +84,10 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
     val settingsScreenVM: SettingsScreenVM = koinViewModel()
     val dictionaryStrings by settingsScreenVM.dictionaryStrings.collectAsStateWithLifecycle()
     val isDictEmpty = dictionaryStrings.isEmpty()
-    var showDeleteDialogBox by rememberSaveable {
+    var showDeleteAllDictStringsDialogBox by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var showDeleteAllDraftsDialogBox by rememberSaveable {
         mutableStateOf(false)
     }
     Scaffold(topBar = {
@@ -243,6 +246,33 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         showIcon = false,
                     ),
                 )
+                Spacer(modifier = Modifier.height(15.dp))
+            }
+            item {
+                Text(
+                    text = "Data",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 15.dp, end = 15.dp, bottom = 15.dp),
+                    fontSize = 16.sp,
+                )
+            }
+            item {
+                SettingComponent(
+                    SettingComponentParam(
+                        title = "Delete all notes",
+                        doesDescriptionExists = false,
+                        description = "",
+                        isSwitchNeeded = false,
+                        isSwitchEnabled = LimaePreferences.autoSaveNotes,
+                        onSwitchStateChange = {
+                            showDeleteAllDraftsDialogBox = true
+                        },
+                        showIcon = true,
+                        icon = Icons.Delete,
+                        showFilledIcon = true,
+                    ),
+                )
                 Spacer(modifier = Modifier.height(10.dp))
             }
             stickyHeader {
@@ -299,7 +329,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
                                 ),
                             onClick = {
-                                showDeleteDialogBox = true
+                                showDeleteAllDictStringsDialogBox = true
                             },
                             modifier =
                                 Modifier
@@ -388,43 +418,30 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
             }
     }
 
-    if (showDeleteDialogBox) {
-        AlertDialog(
+    if (showDeleteAllDictStringsDialogBox) {
+        ConfirmationDialog(
             onDismissRequest = {
-                showDeleteDialogBox = false
+                showDeleteAllDictStringsDialogBox = false
             },
-            confirmButton = {
-                Button(
-                    modifier = Modifier.showHandOnHover().fillMaxWidth(),
-                    onClick = {
-                        settingsScreenVM.performAction(SettingsScreenAction.DeleteAllStringsFromDictionary)
-                        showDeleteDialogBox = false
-                    },
-                ) {
-                    Text(
-                        text = "Delete All",
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                }
+            onConfirm = {
+                settingsScreenVM.performAction(SettingsScreenAction.DeleteAllStringsFromDictionary)
+                showDeleteAllDictStringsDialogBox = false
             },
-            dismissButton = {
-                OutlinedButton(
-                    modifier = Modifier.showHandOnHover().fillMaxWidth(),
-                    onClick = { showDeleteDialogBox = false },
-                ) {
-                    Text(
-                        text = "Cancel",
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                }
+            confirmText = "Delete All",
+            title = "Do you really want to delete all the custom strings?",
+        )
+    }
+    if (showDeleteAllDraftsDialogBox) {
+        ConfirmationDialog(
+            onDismissRequest = {
+                showDeleteAllDraftsDialogBox = false
             },
-            title = {
-                Text(
-                    text = "Do you really want to delete all the custom strings?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontSize = 24.sp,
-                )
+            onConfirm = {
+                settingsScreenVM.performAction(SettingsScreenAction.DeleteAllDrafts)
+                showDeleteAllDraftsDialogBox = false
             },
+            confirmText = "Delete All",
+            title = "Do you really want to delete all the drafts?",
         )
     }
 

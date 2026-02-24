@@ -84,4 +84,11 @@ class NotesRepoImpl(
         }
 
     override fun getAllNotes(): Flow<List<Note>> = noteQueries.getAllNotes().asFlow().mapToList(limaeDispatchers.IO)
+
+    override suspend fun deleteAllNotes(): Result<Unit> =
+        runSafe {
+            withContext(limaeDispatchers.IO) {
+                noteQueries.deleteAllNotes()
+            }
+        }
 }

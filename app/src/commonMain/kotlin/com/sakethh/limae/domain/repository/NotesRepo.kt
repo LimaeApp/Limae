@@ -30,4 +30,6 @@ interface NotesRepo {
     suspend fun getANoteById(id: String): Result<Note>
 
     fun getAllNotes(): Flow<List<Note>>
+
+    suspend fun deleteAllNotes(): Result<Unit>
 }

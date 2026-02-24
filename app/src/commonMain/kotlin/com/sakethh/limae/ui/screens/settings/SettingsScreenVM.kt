@@ -3,6 +3,7 @@ package com.sakethh.limae.ui.screens.settings
 import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.domain.repository.PreferencesRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,6 +12,7 @@ import kotlinx.coroutines.launch
 
 class SettingsScreenVM(
     private val suggestionsRepo: SuggestionsRepo,
+    private val notesRepo: NotesRepo,
     private val preferencesRepo: PreferencesRepo,
 ) : ViewModel() {
     val dictionaryStrings =
@@ -44,6 +46,12 @@ class SettingsScreenVM(
             is SettingsScreenAction.DeleteAllStringsFromDictionary -> {
                 viewModelScope.launch {
                     suggestionsRepo.deleteAllStringsFromDictionary()
+                }
+            }
+
+            SettingsScreenAction.DeleteAllDrafts -> {
+                viewModelScope.launch {
+                    notesRepo.deleteAllNotes()
                 }
             }
         }

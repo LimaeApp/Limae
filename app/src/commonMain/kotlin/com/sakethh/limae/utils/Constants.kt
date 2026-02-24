@@ -5,4 +5,6 @@ object Constants {
     const val DATA_STORE_PREF_NAME = "limae.preferences_pb"
 
     const val MIN_WIDTH_FOR_SUGGESTION_PANEL_ON_RIGHT = 750
+
+    const val COMPONENT_MAX_HEIGHT = 298871 / 2
 }

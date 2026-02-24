@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -39,15 +40,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,6 +69,9 @@ import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.utils.Constants
 import com.sakethh.limae.utils.epochToReadableDateTime
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import org.koin.compose.getKoin
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -138,6 +145,27 @@ fun NoteScreen(
             disabledIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
         )
+
+    var showSavingLabel by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            noteScreenVM.isSavingANote
+        }.drop(1).collectLatest {
+            if (showSavingLabel && !noteScreenVM.isSavingANote && noteScreenVM.note.title.isBlank() &&
+                noteScreenVM.note.content.isBlank()
+            ) {
+                return@collectLatest
+            }
+
+            showSavingLabel = true
+            delay(1500L)
+            showSavingLabel = false
+        }
+    }
+
     Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
         Column(
             modifier =
@@ -165,20 +193,52 @@ fun NoteScreen(
             }, actions = {
                 if (platform.type == Platform.Type.Web) return@TopAppBar
 
-                IconButton(modifier = Modifier.showHandOnHover(), onClick = {
-                    noteScreenVM.onAction(
-                        NoteScreenAction.SaveNote(
-                            noteId = noteId,
-                            title = noteScreenVM.note.title,
-                            content = noteScreenVM.note.content,
-                            onCompletion = {},
-                        ),
-                    )
-                }) {
-                    Icon(
-                        imageVector = Icons.Save,
-                        contentDescription = "Updates/Saves the title and content to the local database",
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AnimatedVisibility(
+                        visible = showSavingLabel,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Text(
+                            text = "Saving...",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 12.5.sp,
+                            fontStyle = FontStyle.Italic,
+                            modifier = Modifier.padding(end = 5.dp),
+                            color = MaterialTheme.colorScheme.secondary.copy(0.75f),
+                        )
+                    }
+                    Box(contentAlignment = Alignment.Center) {
+                        with(this@TopAppBar) {
+                            AnimatedVisibility(
+                                visible =
+                                    noteScreenVM.isSavingANote &&
+                                        (
+                                            noteScreenVM.note.title.isNotBlank() ||
+                                                noteScreenVM.note.content.isNotBlank()
+                                        ),
+                                enter = fadeIn(),
+                                exit = fadeOut(),
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                        IconButton(modifier = Modifier.showHandOnHover(), onClick = {
+                            noteScreenVM.onAction(
+                                NoteScreenAction.SaveNote(
+                                    noteId = noteId,
+                                    title = noteScreenVM.note.title,
+                                    content = noteScreenVM.note.content,
+                                    onCompletion = {},
+                                ),
+                            )
+                        }) {
+                            Icon(
+                                imageVector = Icons.Save,
+                                contentDescription = "Updates/Saves the title and content to the local database",
+                            )
+                        }
+                    }
                 }
             })
             if (platform.type != Platform.Type.AndroidMobile) {
@@ -230,7 +290,10 @@ fun NoteScreen(
                                 noteScreenVM.onAction(NoteScreenAction.OnTitleChange(it))
                             },
                             textStyle = MaterialTheme.typography.titleMedium.copy(fontSize = 24.sp),
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = Constants.COMPONENT_MAX_HEIGHT.dp),
                             colors = textFieldColors,
                         )
                     }
@@ -251,7 +314,11 @@ fun NoteScreen(
                                 MaterialTheme.typography.titleSmall.copy(
                                     fontSize = 18.sp,
                                 ),
-                            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 250.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .defaultMinSize(minHeight = 250.dp)
+                                    .heightIn(max = Constants.COMPONENT_MAX_HEIGHT.dp),
                             colors = textFieldColors,
                         )
                     }

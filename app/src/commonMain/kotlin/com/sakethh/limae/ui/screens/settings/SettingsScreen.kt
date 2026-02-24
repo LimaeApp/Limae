@@ -347,10 +347,11 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         style = MaterialTheme.typography.titleSmall,
                         fontSize = 18.sp,
                         modifier =
-                            Modifier.padding(
-                                start = 15.dp,
-                                end = 15.dp,
-                            ),
+                            Modifier
+                                .padding(
+                                    start = 15.dp,
+                                    end = 15.dp,
+                                ).fillMaxWidth(0.75f),
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.secondary,

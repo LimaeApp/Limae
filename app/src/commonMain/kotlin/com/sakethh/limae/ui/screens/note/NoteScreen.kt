@@ -5,6 +5,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -48,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -68,6 +71,7 @@ import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.SuggestionNote
 import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.utils.Constants
+import com.sakethh.limae.utils.addEdgeToEdgeScaffoldPadding
 import com.sakethh.limae.utils.epochToReadableDateTime
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.delay
@@ -249,7 +253,7 @@ fun NoteScreen(
             }
         }
     }) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+        Box(modifier = Modifier.addEdgeToEdgeScaffoldPadding(paddingValues).fillMaxSize()) {
             Column(modifier = Modifier.align(Alignment.BottomCenter)) {
                 AnimatedVisibility(showSuggestionsPanelInBottom) {
                     Column {
@@ -297,6 +301,13 @@ fun NoteScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .heightIn(max = localWindowInfo.containerSize.height.dp),
+                                    /*.padding(15.dp)
+                                    .clip(RoundedCornerShape(25.dp))
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = MaterialTheme.colorScheme.primary.copy(0.15f),
+                                        shape = RoundedCornerShape(25.dp),
+                                    )*/
                             colors = textFieldColors,
                         )
                     }
@@ -322,6 +333,13 @@ fun NoteScreen(
                                     .fillMaxWidth()
                                     .defaultMinSize(minHeight = 250.dp)
                                     .heightIn(max = localWindowInfo.containerSize.height.dp),
+                                    /*.padding(15.dp)
+                                    .clip(RoundedCornerShape(25.dp))
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = MaterialTheme.colorScheme.primary.copy(0.15f),
+                                        shape = RoundedCornerShape(25.dp),
+                                    )*/
                             colors = textFieldColors,
                         )
                     }

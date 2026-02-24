@@ -1,5 +1,12 @@
 package com.sakethh.limae.utils
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.LayoutDirection
 import com.sakethh.limae.domain.Result
 import com.sakethh.limae.domain.model.LimaeSuggestionBundle
 import com.sakethh.limae.ui.common.ItemState
@@ -90,3 +97,14 @@ fun String.initialCaps(): String =
             this.uppercase()
         }
     }
+
+fun Modifier.addEdgeToEdgeScaffoldPadding(paddingValues: PaddingValues) =
+    this
+        .padding(
+            top = paddingValues.calculateTopPadding(),
+            start =
+                paddingValues.calculateStartPadding(
+                    LayoutDirection.Ltr,
+                ),
+            end = paddingValues.calculateEndPadding(LayoutDirection.Rtl),
+        ).consumeWindowInsets(paddingValues)

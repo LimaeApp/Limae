@@ -118,7 +118,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                 Text(
                     text = "Drafts",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 15.dp, top = 15.dp),
+                    modifier = Modifier.padding(start = 15.dp, top = 15.dp, bottom = 7.5.dp),
                     fontSize = 20.sp,
                     textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.secondary,
@@ -203,7 +203,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                 Card(
                     modifier =
                         Modifier
-                            .padding(15.dp)
+                            .padding(start = 15.dp, end = 15.dp, top = 7.5.dp, bottom = 7.5.dp)
                             .clickable(indication = null, interactionSource = null) {
                                 takeAction(
                                     LimaeAction.Navigate(

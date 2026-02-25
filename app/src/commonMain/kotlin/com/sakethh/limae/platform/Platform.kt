@@ -8,6 +8,10 @@ interface Platform {
         AndroidMobile,
         AndroidTablet,
         Desktop,
-        Web
+        Web,
+    }
+
+    interface Actions {
+        fun openAccessibilitySettings()
     }
 }

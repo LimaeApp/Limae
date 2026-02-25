@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -20,6 +23,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,10 +36,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -77,6 +84,8 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
         mutableStateOf(false)
     }
 
+    val isReadTextFieldAccessibilityServiceRunning by homeScreenVM.isReadTextFieldServiceRunning.collectAsStateWithLifecycle()
+
     val searchBarFocusRequester =
         retain {
             FocusRequester()
@@ -88,6 +97,22 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
             searchBarFocusRequester.requestFocus()
         }
     }
+
+    var ignoreDisabledAccessibilityService by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val accessibilityServiceNoticeBtmSheet =
+        rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+            confirmValueChange = { sheetValue ->
+                if (sheetValue == SheetValue.Hidden) {
+                    isReadTextFieldAccessibilityServiceRunning
+                } else {
+                    true
+                }
+            },
+        )
 
     Scaffold(topBar = {
         LargeTopAppBar(title = {
@@ -363,6 +388,51 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                         maxLines = 5,
                         overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.secondary.copy(0.75f),
+                    )
+                }
+            }
+        }
+    }
+
+    if (!ignoreDisabledAccessibilityService && !isReadTextFieldAccessibilityServiceRunning) {
+        ModalBottomSheet(
+            onDismissRequest = {},
+            sheetState = accessibilityServiceNoticeBtmSheet,
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .padding(start = 15.dp, end = 15.dp)
+                        .fillMaxWidth()
+                        .navigationBarsPadding(),
+            ) {
+                Text(
+                    text = "Accessibility Permission Required",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 24.sp,
+                )
+                Spacer(Modifier.height(5.dp))
+                Text(
+                    text = "Limae requires the accessibility permission to work.\nEverything is processed locally, your drafts and any other information remains on your device.",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = 18.sp,
+                )
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    text = "1. Tap \"Open Accessibility Settings\"\n2. Go to \"Downloaded Apps\"\n3. Select \"Limae\"\n4. Enable the \"Limae\" toggle\n5. Grant \"Full control of your device\"\n   when prompted",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+                Button(
+                    modifier = Modifier.showHandOnHover().fillMaxWidth().padding(top = 15.dp),
+                    onClick = {
+                        homeScreenVM.performAction(HomeScreenAction.OpenAccessibilityServiceScreen)
+                    },
+                ) {
+                    Text(
+                        text = "Open Accessibility Settings",
+                        style = MaterialTheme.typography.titleSmall,
                     )
                 }
             }

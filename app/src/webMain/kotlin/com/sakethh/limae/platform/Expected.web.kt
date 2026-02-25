@@ -16,6 +16,8 @@ import com.sakethh.limae.domain.HarperEngineRepo
 import com.sakethh.limae.domain.LanguageToolEngineRepo
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.json.Json
 import org.koin.core.module.Module
 import org.koin.dsl.bind
@@ -125,3 +127,5 @@ actual fun dynamicLightTheme(): ColorScheme = lightColorScheme()
 actual fun dynamicDarkTheme(): ColorScheme = darkColorScheme()
 
 actual fun platformDataPreferencesModule() = module {}
+
+actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> = flowOf(true)

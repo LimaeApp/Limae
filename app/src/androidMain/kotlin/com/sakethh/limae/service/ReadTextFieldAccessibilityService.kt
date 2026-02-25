@@ -37,6 +37,7 @@ import com.sakethh.limae.utils.onSuccess
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -44,6 +45,14 @@ import org.koin.android.ext.android.getKoin
 import kotlin.math.roundToInt
 
 class ReadTextFieldAccessibilityService : AccessibilityService() {
+    companion object {
+        private val _connected =
+            MutableStateFlow(
+                value = false,
+            )
+        val connected = _connected.asStateFlow()
+    }
+
     private lateinit var windowManager: WindowManager
     private lateinit var composeView: ComposeView
     private val overlayLifecycleOwner = OverlayLifecycleOwner()
@@ -236,6 +245,7 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         showOverlay()
+        _connected.tryEmit(true)
         println("ReadTextFieldAccessibilityService Connected")
     }
 
@@ -260,5 +270,6 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
         super.onDestroy()
         overlayLifecycleOwner.onDestroy()
         hideOverlay()
+        _connected.tryEmit(false)
     }
 }

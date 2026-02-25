@@ -17,9 +17,11 @@ import com.sakethh.limae.HarperJVMEngine
 import com.sakethh.limae.LimaeDatabase
 import com.sakethh.limae.domain.EngineSuggestion
 import com.sakethh.limae.domain.LanguageToolEngineRepo
+import com.sakethh.limae.service.ReadTextFieldAccessibilityService
 import com.sakethh.limae.utils.Constants
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import okio.Path.Companion.toPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.compose.getKoin
@@ -100,3 +102,6 @@ actual fun platformDataPreferencesModule() =
             )
         }.bind<DataStore<Preferences>>()
     }
+
+actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> =
+    ReadTextFieldAccessibilityService.connected

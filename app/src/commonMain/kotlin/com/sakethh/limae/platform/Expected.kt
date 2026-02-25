@@ -6,6 +6,7 @@ import com.sakethh.limae.domain.EngineSuggestion
 import com.sakethh.limae.domain.HarperEngineRepo
 import com.sakethh.limae.domain.LanguageToolEngineRepo
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import org.koin.core.module.Module
 
 expect object HarperEngine : HarperEngineRepo {
@@ -29,3 +30,5 @@ expect fun dynamicLightTheme(): ColorScheme
 
 @Composable
 expect fun dynamicDarkTheme(): ColorScheme
+
+expect val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean>

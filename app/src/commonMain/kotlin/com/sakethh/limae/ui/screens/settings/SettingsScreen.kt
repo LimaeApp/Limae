@@ -452,8 +452,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
         ModalBottomSheet(
             modifier =
                 Modifier
-                    .imePadding()
-                    .navigationBarsPadding(),
+                    .imePadding(),
             onDismissRequest = hideBtmSheet,
             sheetState = newCustomStringInDictBtmSheet,
         ) {
@@ -462,7 +461,8 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                     Modifier
                         .padding(start = 15.dp, end = 15.dp, bottom = 15.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(rememberScrollState())
+                        .navigationBarsPadding(),
             ) {
                 Text(
                     text = "Add strings to your dictionary",

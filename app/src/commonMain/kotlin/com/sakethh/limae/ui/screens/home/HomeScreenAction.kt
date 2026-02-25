@@ -9,4 +9,6 @@ sealed interface HomeScreenAction {
     data class UpdateSearchQuery(
         val string: String,
     ) : HomeScreenAction
+
+    data object OpenAccessibilityServiceScreen : HomeScreenAction
 }

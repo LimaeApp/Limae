@@ -3,6 +3,7 @@ package com.sakethh.limae
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.sakethh.limae.di.initializeKoin
+import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.ui.Limae
 import com.sakethh.limae.ui.common.KeyEventTunnel
 import com.sakethh.limae.ui.theme.LimaeTheme
@@ -10,10 +11,22 @@ import com.sakethh.limae.utils.LimaePreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.dsl.bind
+import org.koin.dsl.module
 import java.awt.Dimension
 
 suspend fun main() {
-    initializeKoin()
+    initializeKoin {
+        modules(
+            module {
+                single {
+                    object : Platform.Actions {
+                        override fun openAccessibilitySettings() = Unit
+                    }
+                }.bind<Platform.Actions>()
+            },
+        )
+    }
     LimaePreferences.loadAll()
     val keyEventTunnelScope = CoroutineScope(Dispatchers.Default)
     application {

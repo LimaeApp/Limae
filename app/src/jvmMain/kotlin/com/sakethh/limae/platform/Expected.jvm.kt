@@ -18,6 +18,8 @@ import com.sakethh.limae.domain.LintKind
 import com.sakethh.limae.utils.Constants
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 import org.koin.core.module.Module
@@ -95,3 +97,7 @@ actual fun platformDataPreferencesModule() =
             )
         }.bind<DataStore<Preferences>>()
     }
+
+actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> = flowOf(true)
+
+actual fun openAccessibilitySettings() = Unit

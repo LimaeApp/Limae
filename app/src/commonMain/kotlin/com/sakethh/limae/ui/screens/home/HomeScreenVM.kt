@@ -7,6 +7,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sakethh.limae.domain.repository.NotesRepo
+import com.sakethh.limae.platform.Platform
+import com.sakethh.limae.platform.isReadTextFieldAccessibilityServiceRunning
 import com.sakethh.limae.ui.common.ItemState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flatMapLatest
@@ -16,6 +18,7 @@ import kotlinx.coroutines.launch
 
 class HomeScreenVM(
     private val notesRepo: NotesRepo,
+    private val platformActions: Platform.Actions,
 ) : ViewModel() {
     var searchQuery by mutableStateOf("")
         private set
@@ -61,6 +64,14 @@ class HomeScreenVM(
                     ),
             )
 
+    val isReadTextFieldServiceRunning =
+        isReadTextFieldAccessibilityServiceRunning
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000L),
+                initialValue = false,
+            )
+
     fun performAction(homeScreenAction: HomeScreenAction) {
         when (homeScreenAction) {
             is HomeScreenAction.DeleteANote -> {
@@ -72,6 +83,10 @@ class HomeScreenVM(
 
             is HomeScreenAction.UpdateSearchQuery -> {
                 searchQuery = homeScreenAction.string
+            }
+
+            is HomeScreenAction.OpenAccessibilityServiceScreen -> {
+                platformActions.openAccessibilitySettings()
             }
         }
     }

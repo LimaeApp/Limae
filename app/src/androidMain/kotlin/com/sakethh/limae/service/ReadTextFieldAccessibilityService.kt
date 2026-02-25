@@ -1,6 +1,7 @@
 package com.sakethh.limae.service
 
 import android.accessibilityservice.AccessibilityService
+import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.os.Bundle
 import android.view.Gravity
@@ -23,12 +24,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.sakethh.limae.AccessibilitySuggestionsSheet
 import com.sakethh.limae.OverlayLifecycleOwner
-import com.sakethh.limae.data.repository.SuggestionsRepoImpl
 import com.sakethh.limae.domain.SuggestionEngine
 import com.sakethh.limae.domain.model.LimaeSuggestionBundle
 import com.sakethh.limae.domain.onFailure
 import com.sakethh.limae.domain.onSuccess
+import com.sakethh.limae.domain.repository.AppBlocklistRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
+import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.theme.LimaeTheme
@@ -36,11 +38,22 @@ import com.sakethh.limae.utils.onFailure
 import com.sakethh.limae.utils.onSuccess
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.getKoin
 import kotlin.math.roundToInt
 
@@ -76,14 +89,56 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
     private var isExpanded by mutableStateOf(false)
     private var showUI by mutableStateOf(false)
 
-    private val suggestionsRepo: SuggestionsRepo =
-        SuggestionsRepoImpl(
-            harperEngineRepo = getKoin().get(),
-            languageToolEngineRepo = getKoin().get(),
-            dictionaryQueries = getKoin().get(),
-            limaeDispatchers = getKoin().get(),
-        )
-    private var focusedTextFieldText by mutableStateOf("")
+    private val suggestionsRepo: SuggestionsRepo = getKoin().get()
+
+    private val appBlocklistRepo: AppBlocklistRepo = getKoin().get()
+
+    var foregroundApp: Platform.Actions.InstalledApp? by mutableStateOf(null)
+
+    private val foregroundChannel = Channel<String>()
+
+    val isFocusedAppBlocked =
+        appBlocklistRepo
+            .getAllBlockedApps()
+            .flatMapLatest { appBlockList ->
+                snapshotFlow {
+                    foregroundApp
+                }.distinctUntilChanged().transform { foregroundApp ->
+                    emit(
+                        appBlockList.find { _foregroundApp ->
+                            _foregroundApp.packageName == foregroundApp?.packageName
+                        } != null,
+                    )
+                }
+            }.stateIn(
+                scope = this.overlayLifecycleOwner.lifecycleScope,
+                started = SharingStarted.WhileSubscribed(5000L),
+                initialValue = true,
+            )
+
+    private suspend fun getForegroundApp(packageName: String): Platform.Actions.InstalledApp =
+        withContext(Dispatchers.IO) {
+            val applicationInfo =
+                applicationContext.packageManager
+                    .getInstalledApplications(
+                        PackageManager.GET_META_DATA,
+                    ).find {
+                        it.packageName == packageName
+                    }!!
+
+            val packageLabel =
+                packageManager
+                    .getApplicationLabel(applicationInfo)
+                    .toString()
+
+            Platform.Actions.InstalledApp(
+                name =
+                packageLabel,
+                packageName = packageName,
+            )
+        }
+
+    private var focusedTextFieldValue by mutableStateOf("")
 
     private val suggestionsResult =
         MutableStateFlow<ItemState<PersistentList<LimaeSuggestionBundle>>>(
@@ -96,19 +151,33 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
         )
 
     private var currentFocusedNode: AccessibilityNodeInfo? = null
+    private val blockingAppOpMutex = Mutex()
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate() {
         super.onCreate()
         overlayLifecycleOwner.lifecycleScope.launch {
-            snapshotFlow {
-                focusedTextFieldText
-            }.debounce(250).collectLatest { inputText ->
-                suggestionsRepo
-                    .getSuggestions(inputText)
-                    .onSuccess { (suggestions) ->
-                        suggestionsResult.onSuccess(suggestions)
-                    }.onFailure(suggestionsResult::onFailure)
+            launch {
+                foregroundChannel.consumeAsFlow().collectLatest { packageName ->
+                    foregroundApp = getForegroundApp(packageName)
+                }
+            }
+
+            launch {
+                snapshotFlow {
+                    focusedTextFieldValue
+                }.transform {
+                    if (!isFocusedAppBlocked.value) {
+                        emit(it)
+                    }
+                }.debounce(250)
+                    .collectLatest { inputText ->
+                        suggestionsRepo
+                            .getSuggestions(inputText)
+                            .onSuccess { (suggestions) ->
+                                suggestionsResult.onSuccess(suggestions)
+                            }.onFailure(suggestionsResult::onFailure)
+                    }
             }
         }
 
@@ -118,11 +187,15 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
             ComposeView(applicationContext).apply {
                 overlayLifecycleOwner.attachTo(this)
                 setContent {
+                    val isFocusedAppBlocked by isFocusedAppBlocked.collectAsStateWithLifecycle()
+                    if (isFocusedAppBlocked) return@setContent
+
                     val suggestions by suggestionsResult.collectAsStateWithLifecycle()
                     LimaeTheme {
                         AnimatedVisibility(showUI) {
                             if (isExpanded) {
                                 AccessibilitySuggestionsSheet(
+                                    foregroundApp = foregroundApp,
                                     onDismissRequest = {
                                         windowParams.gravity = Gravity.TOP or Gravity.START
                                         windowParams.x = lastX
@@ -144,18 +217,16 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
                                         val endIndex = limaeSuggestion.endIndex
 
                                         val replacementText =
-                                            limaeSuggestion
-                                                .suggestions[suggestion]
-                                                .run {
-                                                    if (suggestionEngine == SuggestionEngine.Harper) {
-                                                        this
-                                                            .substringAfter(
-                                                                "“",
-                                                            ).substringBeforeLast("”")
-                                                    } else {
-                                                        this
-                                                    }
+                                            limaeSuggestion.suggestions[suggestion].run {
+                                                if (suggestionEngine == SuggestionEngine.Harper) {
+                                                    this
+                                                        .substringAfter(
+                                                            "“",
+                                                        ).substringBeforeLast("”")
+                                                } else {
+                                                    this
                                                 }
+                                            }
 
                                         val replacedText =
                                             currentFocusedNode?.text?.replaceRange(
@@ -172,6 +243,17 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
                                                 )
                                             },
                                         )
+                                    },
+                                    onBlockRequest = {
+                                        val packageName =
+                                            foregroundApp?.packageName
+                                                ?: return@AccessibilitySuggestionsSheet
+
+                                        overlayLifecycleOwner.lifecycleScope.launch {
+                                            blockingAppOpMutex.withLock {
+                                                appBlocklistRepo.blockAnApp(packageName)
+                                            }
+                                        }
                                     },
                                 )
                             } else {
@@ -218,21 +300,21 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
 
-        val root =
+        val rootInActiveWindow =
             try {
-                rootInActiveWindow
+                this@ReadTextFieldAccessibilityService.rootInActiveWindow
             } catch (_: Exception) {
                 null
             }
 
-        if (root == null) {
+        if (rootInActiveWindow == null) {
             showUI = false
             return
         }
 
         val focusedNode =
             try {
-                root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+                rootInActiveWindow.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
             } catch (_: Exception) {
                 null
             }
@@ -240,7 +322,8 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
         showUI = focusedNode != null && focusedNode.isEditable && !focusedNode.isPassword
 
         if (showUI) {
-            focusedTextFieldText = focusedNode?.text?.toString() ?: ""
+            focusedTextFieldValue = focusedNode?.text?.toString() ?: ""
+            foregroundChannel.trySend(rootInActiveWindow.packageName.toString())
         }
         currentFocusedNode = focusedNode
     }

@@ -1,8 +1,10 @@
 package com.sakethh.limae.di
 
+import com.sakethh.limae.AppBlocklistQueries
 import com.sakethh.limae.DictionaryQueries
 import com.sakethh.limae.LimaeDatabase
 import com.sakethh.limae.NoteQueries
+import com.sakethh.limae.data.repository.AppBlocklistRepoImpl
 import com.sakethh.limae.data.repository.NotesRepoImpl
 import com.sakethh.limae.data.repository.PreferencesRepoImpl
 import com.sakethh.limae.data.repository.SuggestionsRepoImpl
@@ -10,6 +12,7 @@ import com.sakethh.limae.domain.EngineSuggestion
 import com.sakethh.limae.domain.HarperEngineRepo
 import com.sakethh.limae.domain.LanguageToolEngineRepo
 import com.sakethh.limae.domain.LimaeDispatchers
+import com.sakethh.limae.domain.repository.AppBlocklistRepo
 import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.domain.repository.PreferencesRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
@@ -41,6 +44,10 @@ val sharedDatabaseModule =
         single {
             get<LimaeDatabase>().dictionaryQueries
         }.bind<DictionaryQueries>()
+
+        single {
+            get<LimaeDatabase>().appBlocklistQueries
+        }.bind<AppBlocklistQueries>()
     }
 
 val utilsModule =
@@ -54,6 +61,10 @@ val utilsModule =
         single {
             PreferencesRepoImpl(get())
         }.bind<PreferencesRepo>()
+
+        single {
+            AppBlocklistRepoImpl(get(), get())
+        }.bind<AppBlocklistRepo>()
     }
 
 val suggestionsModule =

@@ -15,4 +15,12 @@ sealed interface SettingsScreenAction {
     data object DeleteAllStringsFromDictionary : SettingsScreenAction
 
     data object DeleteAllDrafts : SettingsScreenAction
+
+    data class UpdateAppSearchQuery(
+        val string: String,
+    ) : SettingsScreenAction
+
+    data class OnBlockAnApp(
+        val packageName: String,
+    ) : SettingsScreenAction
 }

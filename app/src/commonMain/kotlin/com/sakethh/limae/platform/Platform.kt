@@ -1,5 +1,7 @@
 package com.sakethh.limae.platform
 
+import androidx.compose.runtime.Stable
+
 interface Platform {
     val version: Int?
     val type: Type
@@ -13,5 +15,13 @@ interface Platform {
 
     interface Actions {
         fun openAccessibilitySettings()
+
+        @Stable
+        data class InstalledApp(
+            val name: String,
+            val packageName: String,
+        )
+
+        suspend fun getInstalledApps(): List<InstalledApp> = emptyList()
     }
 }

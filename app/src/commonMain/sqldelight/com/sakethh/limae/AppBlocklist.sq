@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS AppBlocklist (
+    id TEXT PRIMARY KEY,
+    packageName TEXT NOT NULL UNIQUE,
+    CHECK(trim(packageName) <> '' AND trim(id) <> '')
+);
+
+blockAnApp:
+INSERT OR IGNORE INTO AppBlocklist(id,packageName) VALUES (:id,:packageName);
+
+unblockAnApp:
+DELETE FROM AppBlocklist WHERE packageName = :packageName;
+
+getAllBlockedApps:
+SELECT * FROM AppBlocklist;

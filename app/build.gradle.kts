@@ -110,8 +110,12 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+        }
+
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
         }
     }
     compileOptions {

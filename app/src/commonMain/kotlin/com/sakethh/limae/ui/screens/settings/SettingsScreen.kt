@@ -1,11 +1,21 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.sakethh.limae.ui.screens.settings
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,10 +28,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -45,6 +58,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -58,6 +73,7 @@ import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.ConfirmationDialog
+import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.utils.LimaePreferences
 import kotlinx.coroutines.launch
@@ -90,6 +106,28 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
     var showDeleteAllDraftsDialogBox by rememberSaveable {
         mutableStateOf(false)
     }
+    var showBlockAppsList by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val blockListIcnBtnRotation by animateFloatAsState(targetValue = if (showBlockAppsList) 90f else -90f)
+
+    val installedAppsState by settingsScreenVM.installedApps.collectAsStateWithLifecycle(
+        initialValue =
+            ItemState(
+                isError = false,
+                errorMessage = null,
+                isLoading = true,
+                data = emptyList(),
+            ),
+    )
+
+    val appBlockList by settingsScreenVM.appBlockList.collectAsStateWithLifecycle()
+
+    val areSearchResultsEmpty =
+        settingsScreenVM.appSearchQuery.isNotBlank() && installedAppsState.data.isEmpty() &&
+            !installedAppsState.isLoading
+
     Scaffold(topBar = {
         LargeTopAppBar(title = {
             Text(
@@ -135,8 +173,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                             description = null,
                             isSwitchEnabled = LimaePreferences.useSystemTheme,
                             onSwitchStateChange = {
-                                LimaePreferences.useSystemTheme =
-                                    !LimaePreferences.useSystemTheme
+                                LimaePreferences.useSystemTheme = !LimaePreferences.useSystemTheme
 
                                 settingsScreenVM.updatePreference(
                                     preferenceKey = booleanPreferencesKey(LimaePreferences.Key.USE_SYSTEM_THEME.name),
@@ -159,8 +196,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                             isSwitchNeeded = true,
                             isSwitchEnabled = LimaePreferences.useDarkTheme,
                             onSwitchStateChange = {
-                                LimaePreferences.useDarkTheme =
-                                    !LimaePreferences.useDarkTheme
+                                LimaePreferences.useDarkTheme = !LimaePreferences.useDarkTheme
                                 settingsScreenVM.updatePreference(
                                     preferenceKey = booleanPreferencesKey(LimaePreferences.Key.USE_DARK_THEME.name),
                                     newValue = LimaePreferences.useDarkTheme,
@@ -182,8 +218,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                             isSwitchNeeded = true,
                             isSwitchEnabled = LimaePreferences.useAmoledTheme,
                             onSwitchStateChange = {
-                                LimaePreferences.useAmoledTheme =
-                                    !LimaePreferences.useAmoledTheme
+                                LimaePreferences.useAmoledTheme = !LimaePreferences.useAmoledTheme
                                 settingsScreenVM.updatePreference(
                                     preferenceKey = booleanPreferencesKey(LimaePreferences.Key.USE_AMOLED_THEME.name),
                                     newValue = LimaePreferences.useAmoledTheme,
@@ -236,8 +271,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         isSwitchNeeded = true,
                         isSwitchEnabled = LimaePreferences.autoSaveNotes,
                         onSwitchStateChange = {
-                            LimaePreferences.autoSaveNotes =
-                                !LimaePreferences.autoSaveNotes
+                            LimaePreferences.autoSaveNotes = !LimaePreferences.autoSaveNotes
                             settingsScreenVM.updatePreference(
                                 preferenceKey = booleanPreferencesKey(LimaePreferences.Key.AUTO_SAVE_NOTE.name),
                                 newValue = LimaePreferences.autoSaveNotes,
@@ -246,7 +280,188 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         showIcon = false,
                     ),
                 )
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(if (onAndroid) 7.5.dp else 15.dp))
+            }
+            if (onAndroid) {
+                item {
+                    Row(
+                        modifier =
+                            Modifier
+                                .padding(start = 15.dp, end = 15.dp)
+                                .clickable(indication = null, interactionSource = null) {
+                                    showBlockAppsList = !showBlockAppsList
+                                }.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = "Blocklist",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 16.sp,
+                        )
+                        IconButton(modifier = Modifier.showHandOnHover(), onClick = {
+                            showBlockAppsList = !showBlockAppsList
+                        }) {
+                            Icon(
+                                modifier = Modifier.rotate(blockListIcnBtnRotation),
+                                imageVector = Icons.ArrowBack,
+                                contentDescription = "Expand/shrink icon button to take add/remove apps considered for limae suggestions",
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Limae will not show up nor process anything in the apps that are in the blocklist.",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier =
+                            Modifier.padding(
+                                start = 15.dp,
+                                end = 15.dp,
+                                bottom = animateDpAsState(if (showBlockAppsList) 15.dp else 0.dp).value,
+                            ),
+                        fontSize = 15.sp,
+                    )
+                    AnimatedVisibility(
+                        visible = showBlockAppsList,
+                        enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+                        exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
+                    ) {
+                        Column(
+                            modifier =
+                                Modifier
+                                    .padding(start = 15.dp, end = 15.dp)
+                                    .clip(RoundedCornerShape(25.dp))
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = MaterialTheme.colorScheme.outline.copy(0.15f),
+                                        shape = RoundedCornerShape(25.dp),
+                                    ).background(
+                                        MaterialTheme.colorScheme.primaryContainer.copy(0.15f),
+                                    ).height(300.dp)
+                                    .fillMaxSize(),
+                        ) {
+                            TextField(
+                                leadingIcon = {
+                                    Icon(imageVector = Icons.Search, contentDescription = null)
+                                },
+                                textStyle = MaterialTheme.typography.titleSmall,
+                                label = {
+                                    Text(
+                                        text = "Search for the apps",
+                                        style = MaterialTheme.typography.titleSmall,
+                                    )
+                                },
+                                value = settingsScreenVM.appSearchQuery,
+                                onValueChange = {
+                                    settingsScreenVM.performAction(
+                                        SettingsScreenAction.UpdateAppSearchQuery(
+                                            it,
+                                        ),
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                            ) {
+                                item {
+                                    AnimatedVisibility(installedAppsState.isLoading) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.height(300.dp).fillMaxWidth(),
+                                        ) {
+                                            ContainedLoadingIndicator()
+                                        }
+                                    }
+                                }
+                                if (installedAppsState.isLoading) return@LazyColumn
+                                if (!areSearchResultsEmpty) {
+                                    item {
+                                        Spacer(modifier = Modifier.height(7.5.dp))
+                                    }
+                                }
+                                items(installedAppsState.data) { app ->
+                                    Row(
+                                        modifier =
+                                            Modifier
+                                                .padding(
+                                                    start = 15.dp,
+                                                    end = 15.dp,
+                                                    top = 7.5.dp,
+                                                    bottom = 7.5.dp,
+                                                ).fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Column(modifier = Modifier.fillMaxWidth(0.75f)) {
+                                            if (app.name.isNotBlank()) {
+                                                Text(
+                                                    text = app.name,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontSize = 16.sp,
+                                                )
+                                            }
+                                            Text(
+                                                text = app.packageName,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontSize = 14.sp,
+                                            )
+                                        }
+                                        IconButton(onClick = {
+                                            settingsScreenVM.performAction(
+                                                SettingsScreenAction.OnBlockAnApp(
+                                                    packageName = app.packageName,
+                                                ),
+                                            )
+                                        }) {
+                                            AnimatedContent(
+                                                if (appBlockList.contains(
+                                                        app.packageName,
+                                                    )
+                                                ) {
+                                                    Icons.Remove
+                                                } else {
+                                                    Icons.Add
+                                                },
+                                            ) { icon ->
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = "Add/remove app to/from block list",
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                item {
+                                    AnimatedVisibility(visible = areSearchResultsEmpty) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier =
+                                                Modifier
+                                                    .padding(15.dp),
+                                        ) {
+                                            Text(
+                                                text = "No results found for your query!",
+                                                fontSize = 16.sp,
+                                                style = MaterialTheme.typography.titleMedium,
+                                            )
+                                        }
+                                    }
+                                }
+                                if (!areSearchResultsEmpty) {
+                                    item {
+                                        Spacer(modifier = Modifier.height(7.5.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(15.dp))
+                }
+            } else {
+                item {
+                    Spacer(modifier = Modifier.height(7.5.dp))
+                }
             }
             item {
                 Text(
@@ -273,7 +488,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         showFilledIcon = true,
                     ),
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(15.dp))
             }
             stickyHeader {
                 Column(
@@ -291,7 +506,6 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                                 start = 15.dp,
                                 end = 15.dp,
                                 bottom = 5.dp,
-                                top = if (onAndroid) 15.dp else 0.dp,
                             ),
                         fontSize = 16.sp,
                     )
@@ -450,9 +664,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
             mutableStateOf("")
         }
         ModalBottomSheet(
-            modifier =
-                Modifier
-                    .imePadding(),
+            modifier = Modifier.imePadding(),
             onDismissRequest = hideBtmSheet,
             sheetState = newCustomStringInDictBtmSheet,
         ) {

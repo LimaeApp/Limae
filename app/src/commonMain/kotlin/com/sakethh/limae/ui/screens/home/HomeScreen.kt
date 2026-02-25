@@ -98,10 +98,6 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
         }
     }
 
-    var ignoreDisabledAccessibilityService by rememberSaveable {
-        mutableStateOf(false)
-    }
-
     val accessibilityServiceNoticeBtmSheet =
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
@@ -394,7 +390,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
         }
     }
 
-    if (!ignoreDisabledAccessibilityService && !isReadTextFieldAccessibilityServiceRunning) {
+    if (!isReadTextFieldAccessibilityServiceRunning) {
         ModalBottomSheet(
             onDismissRequest = {},
             sheetState = accessibilityServiceNoticeBtmSheet,

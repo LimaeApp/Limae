@@ -99,5 +99,3 @@ actual fun platformDataPreferencesModule() =
     }
 
 actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> = flowOf(true)
-
-actual fun openAccessibilitySettings() = Unit

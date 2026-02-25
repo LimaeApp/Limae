@@ -410,19 +410,21 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                     text = "Accessibility Permission Required",
                     style = MaterialTheme.typography.titleLarge,
                     fontSize = 24.sp,
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.height(5.dp))
                 Text(
                     text = "Limae requires the accessibility permission to work.\nEverything is processed locally, your drafts and any other information remains on your device.",
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.secondary,
                 )
                 Spacer(Modifier.height(15.dp))
                 Text(
                     text = "1. Tap \"Open Accessibility Settings\"\n2. Go to \"Downloaded Apps\"\n3. Select \"Limae\"\n4. Enable the \"Limae\" toggle\n5. Grant \"Full control of your device\"\n   when prompted",
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = MaterialTheme.colorScheme.secondary.copy(0.75f),
                 )
                 Button(
                     modifier = Modifier.showHandOnHover().fillMaxWidth().padding(top = 15.dp),

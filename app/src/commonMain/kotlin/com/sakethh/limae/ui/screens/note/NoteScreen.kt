@@ -301,13 +301,13 @@ fun NoteScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .heightIn(max = localWindowInfo.containerSize.height.dp),
-                                    /*.padding(15.dp)
-                                    .clip(RoundedCornerShape(25.dp))
-                                    .border(
-                                        width = 1.5.dp,
-                                        color = MaterialTheme.colorScheme.primary.copy(0.15f),
-                                        shape = RoundedCornerShape(25.dp),
-                                    )*/
+                            /*.padding(15.dp)
+                            .clip(RoundedCornerShape(25.dp))
+                            .border(
+                                width = 1.5.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(0.15f),
+                                shape = RoundedCornerShape(25.dp),
+                            )*/
                             colors = textFieldColors,
                         )
                     }
@@ -333,13 +333,13 @@ fun NoteScreen(
                                     .fillMaxWidth()
                                     .defaultMinSize(minHeight = 250.dp)
                                     .heightIn(max = localWindowInfo.containerSize.height.dp),
-                                    /*.padding(15.dp)
-                                    .clip(RoundedCornerShape(25.dp))
-                                    .border(
-                                        width = 1.5.dp,
-                                        color = MaterialTheme.colorScheme.primary.copy(0.15f),
-                                        shape = RoundedCornerShape(25.dp),
-                                    )*/
+                            /*.padding(15.dp)
+                            .clip(RoundedCornerShape(25.dp))
+                            .border(
+                                width = 1.5.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(0.15f),
+                                shape = RoundedCornerShape(25.dp),
+                            )*/
                             colors = textFieldColors,
                         )
                     }
@@ -382,105 +382,6 @@ fun NoteScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-typealias LimaeNotesIndex = Int
-typealias SuggestionNoteIndex = Int
-
-@Composable
-fun SuggestionsList(
-    suggestions: PersistentList<LimaeSuggestionBundle>,
-    modifier: Modifier = Modifier.fillMaxSize(),
-    showStickyHeader: Boolean = true,
-    onAddToDictionary: (LimaeSuggestionBundle) -> Unit,
-    onSuggestionAccept: (LimaeNotesIndex, SuggestionNoteIndex) -> Unit,
-    onAcceptAll: () -> Unit,
-) {
-    val dictStringsLookup =
-        retain {
-            mutableStateSetOf<String>()
-        }
-    LazyColumn(modifier = modifier) {
-        if (showStickyHeader) {
-            stickyHeader {
-                Column(
-                    modifier =
-                        Modifier
-                            .background(MaterialTheme.colorScheme.surface)
-                            .fillMaxWidth(),
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth().padding(15.dp),
-                    ) {
-                        Text(
-                            text = "Suggestions",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontSize = 24.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.fillMaxWidth(0.75f).padding(start = 5.dp),
-                        )
-                        FilledTonalIconButton(
-                            enabled = !suggestions.isEmpty(),
-                            modifier = Modifier.showHandOnHover(),
-                            onClick = onAcceptAll,
-                        ) {
-                            Icon(
-                                imageVector = Icons.DoneAll,
-                                contentDescription = "Apply all the edits",
-                            )
-                        }
-                    }
-                    HorizontalDivider(
-                        modifier = Modifier.padding(bottom = 5.dp).fillMaxWidth(),
-                    )
-                }
-            }
-        }
-        item {
-            Spacer(
-                modifier =
-                    Modifier.height(
-                        if (platform.type == Platform.Type.AndroidMobile) 15.dp else 0.dp,
-                    ),
-            )
-        }
-        if (suggestions.isEmpty()) {
-            item {
-                Text(
-                    modifier = Modifier.padding(15.dp),
-                    text = "No suggestions yet.",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontSize = 32.sp,
-                )
-            }
-        }
-        itemsIndexed(suggestions, key = { _, suggestion ->
-            "Suggestion-${suggestion.suggestion.refId}"
-        }) { index, suggestion ->
-            if (dictStringsLookup.contains(suggestion.suggestion.errorSequence)) return@itemsIndexed
-
-            SuggestionNote(
-                limaeSuggestionBundle = suggestion,
-                onAddToDictionary = {
-                    onAddToDictionary(suggestion)
-                    dictStringsLookup.add(suggestion.suggestion.errorSequence)
-                },
-                onSuggestionAccept = {
-                    onSuggestionAccept(index, it)
-                },
-            )
-        }
-        item {
-            Spacer(
-                modifier =
-                    Modifier.height(
-                        if (platform.type == Platform.Type.AndroidMobile) 15.dp else 250.dp,
-                    ),
-            )
         }
     }
 }

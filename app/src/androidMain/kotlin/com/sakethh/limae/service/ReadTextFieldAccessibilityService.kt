@@ -109,7 +109,6 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
                     .onSuccess { (suggestions) ->
                         suggestionsResult.onSuccess(suggestions)
                     }.onFailure(suggestionsResult::onFailure)
-                println("limae_data:${suggestionsResult.value.data} for input: $inputText")
             }
         }
 
@@ -133,7 +132,11 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
                                         isExpanded = false
                                     },
                                     suggestions = suggestions.data,
-                                    onAddToDictionary = {},
+                                    onAddToDictionary = {
+                                        this@ReadTextFieldAccessibilityService.overlayLifecycleOwner.lifecycleScope.launch {
+                                            suggestionsRepo.addStringsToDictionary(listOf(it.suggestion.errorSequence))
+                                        }
+                                    },
                                     onSuggestionAccept = { suggestionIndex, suggestion ->
                                         val (limaeSuggestion, suggestionEngine) = suggestions.data[suggestionIndex]
 

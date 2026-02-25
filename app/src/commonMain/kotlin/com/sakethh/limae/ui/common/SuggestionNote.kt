@@ -31,6 +31,7 @@ fun SuggestionNote(
     limaeSuggestionBundle: LimaeSuggestionBundle,
     onAddToDictionary: () -> Unit,
     onSuggestionAccept: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier =
@@ -40,7 +41,8 @@ fun SuggestionNote(
                     start = 15.dp,
                     top = 2.5.dp,
                     bottom = 2.5.dp,
-                ).fillMaxWidth(),
+                ).fillMaxWidth()
+                .then(modifier),
     ) {
         Column {
             Column(

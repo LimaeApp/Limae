@@ -239,9 +239,14 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
                             } else {
                                 Column {
                                     Text(
-                                        text = "It's all empty in drafts!",
+                                        text = "No drafts yet. Write something and it'll show up here.",
                                         style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.padding(top = 75.dp, start = 15.dp),
+                                        modifier =
+                                            Modifier.padding(
+                                                top = 75.dp,
+                                                start = 15.dp,
+                                                end = 25.dp,
+                                            ),
                                         fontSize = 18.sp,
                                         textAlign = TextAlign.Start,
                                         color = MaterialTheme.colorScheme.tertiary,
@@ -390,7 +395,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
         }
     }
 
-    if (!isReadTextFieldAccessibilityServiceRunning) {
+    if (false && !isReadTextFieldAccessibilityServiceRunning) {
         ModalBottomSheet(
             onDismissRequest = {},
             sheetState = accessibilityServiceNoticeBtmSheet,

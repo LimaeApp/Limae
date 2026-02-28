@@ -94,7 +94,40 @@ object Icons {
 
     @Suppress("ObjectPropertyName")
     private var _DataObject: ImageVector? = null
+    val ArrowForward: ImageVector
+        get() {
+            if (_ArrowForward != null) {
+                return _ArrowForward!!
+            }
+            _ArrowForward =
+                ImageVector
+                    .Builder(
+                        name = "ArrowForward",
+                        defaultWidth = 24.dp,
+                        defaultHeight = 24.dp,
+                        viewportWidth = 960f,
+                        viewportHeight = 960f,
+                    ).apply {
+                        path(fill = SolidColor(Color(0xFFE3E3E3))) {
+                            moveTo(647f, 520f)
+                            lineTo(160f, 520f)
+                            verticalLineToRelative(-80f)
+                            horizontalLineToRelative(487f)
+                            lineTo(423f, 216f)
+                            lineToRelative(57f, -56f)
+                            lineToRelative(320f, 320f)
+                            lineToRelative(-320f, 320f)
+                            lineToRelative(-57f, -56f)
+                            lineToRelative(224f, -224f)
+                            close()
+                        }
+                    }.build()
 
+            return _ArrowForward!!
+        }
+
+    @Suppress("ObjectPropertyName")
+    private var _ArrowForward: ImageVector? = null
     val Add: ImageVector
         get() {
             if (_Add != null) {

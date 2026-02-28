@@ -28,83 +28,100 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.common.showHandOnHover
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SettingComponent(
-    settingComponentParam: SettingComponentParam
-) {
+fun SettingComponent(settingComponentParam: SettingComponentParam) {
     val uriHandler = LocalUriHandler.current
     Row(
-        modifier = Modifier.showHandOnHover()
-            .combinedClickable(
-                interactionSource = remember {
-                    MutableInteractionSource()
-                }, indication = null,
-                onClick = {
-                    settingComponentParam.onSwitchStateChange(!settingComponentParam.isSwitchEnabled)
-                    settingComponentParam.onAcknowledgmentClick(uriHandler)
-                })
-            .fillMaxWidth()
-            .animateContentSize(), verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .showHandOnHover()
+                .combinedClickable(
+                    interactionSource =
+                        remember {
+                            MutableInteractionSource()
+                        },
+                    indication = null,
+                    onClick = {
+                        settingComponentParam.onSwitchStateChange(!settingComponentParam.isSwitchEnabled)
+                        settingComponentParam.onAcknowledgmentClick(uriHandler)
+                    },
+                ).fillMaxWidth()
+                .animateContentSize(),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (settingComponentParam.showIcon && settingComponentParam.icon != null) {
             Spacer(modifier = Modifier.width(10.dp))
             IconButton(
                 modifier = Modifier.pointerHoverIcon(icon = PointerIcon.Hand),
-                colors = if (settingComponentParam.showFilledIcon) IconButtonDefaults.filledTonalIconButtonColors() else IconButtonDefaults.iconButtonColors(),
-                onClick = { settingComponentParam.onSwitchStateChange(!settingComponentParam.isSwitchEnabled) }) {
+                colors =
+                    if (settingComponentParam.showFilledIcon) {
+                        IconButtonDefaults.filledTonalIconButtonColors()
+                    } else {
+                        IconButtonDefaults
+                            .iconButtonColors()
+                    },
+                onClick = { settingComponentParam.onSwitchStateChange(!settingComponentParam.isSwitchEnabled) },
+            ) {
                 Icon(
                     imageVector = settingComponentParam.icon,
-                    contentDescription = null
+                    contentDescription = null,
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
         }
         Column {
             Text(
-                text = rememberSaveable(settingComponentParam.title) {
-                    settingComponentParam.title
-                },
+                text =
+                    rememberSaveable(settingComponentParam.title) {
+                        settingComponentParam.title
+                    },
                 style = MaterialTheme.typography.titleMedium,
                 fontSize = 16.sp,
-                modifier = Modifier
-                    .fillMaxWidth(if (settingComponentParam.showArrowIcon || settingComponentParam.isSwitchNeeded) 0.75f else 1f)
-                    .padding(
-                        start = if (settingComponentParam.showIcon) 0.dp else 15.dp,
-                        end = if (!settingComponentParam.isSwitchNeeded) 25.dp else 0.dp
-                    ),
-                lineHeight = 20.sp
+                modifier =
+                    Modifier
+                        .fillMaxWidth(if (settingComponentParam.showArrowIcon || settingComponentParam.isSwitchNeeded) 0.75f else 1f)
+                        .padding(
+                            start = if (settingComponentParam.showIcon) 0.dp else 15.dp,
+                            end = if (!settingComponentParam.isSwitchNeeded) 25.dp else 0.dp,
+                        ),
+                lineHeight = 20.sp,
             )
             if (settingComponentParam.doesDescriptionExists) {
                 Text(
-                    text = rememberSaveable(settingComponentParam.description) {
-                        settingComponentParam.description ?: ""
-                    },
+                    text =
+                        rememberSaveable(settingComponentParam.description) {
+                            settingComponentParam.description ?: ""
+                        },
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = 14.sp,
                     lineHeight = 18.sp,
                     textAlign = TextAlign.Start,
-                    modifier = Modifier
-                        .fillMaxWidth(if (settingComponentParam.showArrowIcon || settingComponentParam.isSwitchNeeded) 0.75f else 1f)
-                        .padding(
-                            start = if (settingComponentParam.showIcon) 0.dp else 15.dp,
-                            top = 10.dp,
-                            end = if (!settingComponentParam.isSwitchNeeded) 25.dp else 15.dp
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(if (settingComponentParam.showArrowIcon || settingComponentParam.isSwitchNeeded) 0.75f else 1f)
+                            .padding(
+                                start = if (settingComponentParam.showIcon) 0.dp else 15.dp,
+                                top = 10.dp,
+                                end = if (!settingComponentParam.isSwitchNeeded) 25.dp else 15.dp,
+                            ),
                 )
             }
         }
         if (settingComponentParam.isSwitchNeeded) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                 Switch(
-                    modifier = Modifier
-                        .padding(end = 15.dp),
+                    modifier =
+                        Modifier
+                            .padding(end = 15.dp),
                     checked = settingComponentParam.isSwitchEnabled,
                     onCheckedChange = {
                         settingComponentParam.onSwitchStateChange(it)
-                    })
+                    },
+                )
             }
         }
         if (settingComponentParam.showArrowIcon) {
@@ -113,12 +130,13 @@ fun SettingComponent(
                     modifier = Modifier.pointerHoverIcon(icon = PointerIcon.Hand),
                     onClick = {
                         settingComponentParam.onAcknowledgmentClick(
-                            uriHandler
+                            uriHandler,
                         )
-                    }) {
+                    },
+                ) {
                     Icon(
-                        imageVector = TODO(),
-                        contentDescription = null
+                        imageVector = Icons.ArrowForward,
+                        contentDescription = null,
                     )
                 }
             }

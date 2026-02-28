@@ -1,6 +1,7 @@
 package com.sakethh.limae.utils
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.sakethh.limae.domain.repository.PreferencesRepo
@@ -16,6 +17,11 @@ object LimaePreferences : KoinComponent {
     var useDynamicTheming by mutableStateOf(false)
 
     var autoSaveNotes by mutableStateOf(true)
+    var useAutoExports by mutableStateOf(false)
+
+    var accessibilityIconSize by mutableIntStateOf(45)
+
+    var exportDirPath by mutableStateOf("")
 
     enum class Primitive {
         Int,
@@ -36,6 +42,9 @@ object LimaePreferences : KoinComponent {
         USE_AMOLED_THEME(::useAmoledTheme, Primitive.Boolean),
         USE_DYNAMIC_THEME(::useDynamicTheming, Primitive.Boolean),
         AUTO_SAVE_NOTE(::autoSaveNotes, Primitive.Boolean),
+        USE_SNAPSHOTS(::useAutoExports, Primitive.Boolean),
+        ACCESSIBILITY_ICON_SIZE(::accessibilityIconSize, Primitive.Int),
+        EXPORT_DIR_PATH(::exportDirPath, Primitive.String),
     }
 
     private val preferencesRepo by inject<PreferencesRepo>()

@@ -21,6 +21,7 @@ import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.platform.HarperEngine
 import com.sakethh.limae.platform.LanguageToolEngine
 import com.sakethh.limae.platform.LimaeIODispatcher
+import com.sakethh.limae.ui.LimaeVM
 import com.sakethh.limae.ui.screens.home.HomeScreenVM
 import com.sakethh.limae.ui.screens.note.NoteScreenVM
 import com.sakethh.limae.ui.screens.settings.SettingsScreenVM
@@ -35,6 +36,7 @@ val notesModule =
         singleOf(::NotesRepoImpl).bind<NotesRepo>()
         viewModelOf(::NoteScreenVM)
         viewModelOf(::HomeScreenVM)
+        viewModelOf(::LimaeVM)
     }
 
 val sharedDatabaseModule =
@@ -69,7 +71,7 @@ val utilsModule =
         }.bind<AppBlocklistRepo>()
 
         single {
-            DatabaseUtilsRepoImpl(get(), get(), get())
+            DatabaseUtilsRepoImpl(get(), get(), get(), get())
         }.bind<DatabaseUtilsRepo>()
     }
 

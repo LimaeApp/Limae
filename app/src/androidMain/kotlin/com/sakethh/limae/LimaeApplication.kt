@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
+import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -11,10 +12,14 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.documentfile.provider.DocumentFile
 import com.sakethh.limae.di.initializeKoin
+import com.sakethh.limae.domain.ExportType
+import com.sakethh.limae.domain.Result
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.utils.Constants
 import com.sakethh.limae.utils.LimaePreferences
+import com.sakethh.limae.utils.runSafe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -25,6 +30,9 @@ import okio.Path.Companion.toPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class LimaeApplication : Application() {
     override fun onCreate() {
@@ -40,6 +48,16 @@ class LimaeApplication : Application() {
                                     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                     startActivity(intent)
+                                }
+
+                                override suspend fun pickADirectory(): String? {
+                                    AndroidEvent.pushEvent(AndroidEvent.PickADirectory())
+                                    val (uri) =
+                                        AndroidEvent.readEvents.first {
+                                            it is AndroidEvent.PickedDirectory && it.id == Constants.PICK_DIR_ID
+                                        } as AndroidEvent.PickedDirectory
+
+                                    return uri?.toString()
                                 }
 
                                 override suspend fun getInstalledApps(): List<Platform.Actions.InstalledApp> =
@@ -64,13 +82,127 @@ class LimaeApplication : Application() {
                                             }.awaitAll()
                                     }
 
-                                override suspend fun exportData(content: String) {
-                                    TODO()
+                                private suspend fun cleanAutoBackups(
+                                    backupLocation: String,
+                                    threshold: Int = 25,
+                                    onCompletion: (Int) -> Unit = {},
+                                ) {
+                                    try {
+                                        withContext(Dispatchers.IO) {
+                                            DocumentFile
+                                                .fromTreeUri(
+                                                    this@LimaeApplication,
+                                                    backupLocation.toUri(),
+                                                )?.listFiles()
+                                                ?.filter {
+                                                    it.name?.startsWith("LimaeBackup-") == true
+                                                }?.let { snapshots ->
+                                                    val snapshotsCount = snapshots.count()
+                                                    if (snapshotsCount > threshold) {
+                                                        snapshots
+                                                            .sortedBy {
+                                                                it.lastModified()
+                                                            }.take(snapshotsCount - threshold)
+                                                            .apply {
+                                                                forEach {
+                                                                    it.delete()
+                                                                }
+                                                                onCompletion(count())
+                                                            }
+                                                    } else {
+                                                        onCompletion(0)
+                                                    }
+                                                }
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
                                 }
 
-                                override suspend fun importData(): String {
-                                    TODO()
-                                }
+                                override suspend fun exportData(
+                                    exportType: ExportType,
+                                    dirPath: String,
+                                    content: String,
+                                ): Result<Unit> =
+                                    runSafe {
+                                        if (exportType == ExportType.Backup) {
+                                            cleanAutoBackups(
+                                                backupLocation = dirPath,
+                                            )
+                                        }
+
+                                        val simpleDateFormat =
+                                            SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US)
+                                        val timestamp = simpleDateFormat.format(Date())
+                                        val exportFileName =
+                                            "${if (exportType == ExportType.Standard) "LimaeExport" else "LimaeBackup"}-$timestamp.json"
+                                        val directoryUri = dirPath.toUri()
+                                        val directory =
+                                            DocumentFile.fromTreeUri(
+                                                this@LimaeApplication,
+                                                directoryUri,
+                                            )
+                                        val newFile =
+                                            directory?.createFile(
+                                                "application/json",
+                                                exportFileName,
+                                            )
+                                        newFile?.uri?.let { fileUri ->
+                                            this@LimaeApplication
+                                                .contentResolver
+                                                .openOutputStream(
+                                                    fileUri,
+                                                )?.use { outputStream ->
+                                                    outputStream.write(content.toByteArray())
+                                                }
+                                        }
+                                    }
+
+                                override suspend fun importData(): Result<String?> =
+                                    runSafe {
+                                        AndroidEvent.pushEvent(AndroidEvent.PickAFile())
+
+                                        val selectedFile =
+                                            AndroidEvent.readEvents.first {
+                                                it is AndroidEvent.PickedFile && it.id == Constants.IMPORT_ID
+                                            } as AndroidEvent.PickedFile
+
+                                        selectedFile.uri?.let { uri ->
+                                            val importRawData = StringBuilder()
+                                            val documentFile =
+                                                DocumentFile
+                                                    .fromSingleUri(
+                                                        this@LimaeApplication,
+                                                        uri,
+                                                    )
+                                            if (documentFile?.isFile == false) {
+                                                return@let null
+                                            }
+                                            this@LimaeApplication
+                                                .contentResolver
+                                                .openInputStream(
+                                                    uri,
+                                                ).use { inputStream ->
+                                                    inputStream
+                                                        ?.bufferedReader()
+                                                        ?.use { bufferedReader ->
+                                                            while (bufferedReader
+                                                                    .readLine()
+                                                                    .also { line ->
+                                                                        if (line != null) {
+                                                                            importRawData.append(
+                                                                                line,
+                                                                            )
+                                                                        }
+                                                                    } != null
+                                                            ) {
+                                                                // no op required
+                                                            }
+                                                        }
+                                                }
+                                            importRawData.toString()
+                                        }
+                                    }
                             }
                         }.bind<Platform.Actions>()
                     },

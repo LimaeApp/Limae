@@ -27,9 +27,11 @@ import com.sakethh.limae.ui.navigation.NavRoute
 import com.sakethh.limae.ui.screens.home.HomeScreen
 import com.sakethh.limae.ui.screens.note.NoteScreen
 import com.sakethh.limae.ui.screens.settings.SettingsScreen
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun Limae() {
+    koinViewModel<LimaeVM>()
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         val navController = rememberNavController()
         val takeAction: (LimaeAction) -> Unit =

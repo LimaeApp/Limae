@@ -10,6 +10,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,11 +26,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
@@ -40,10 +45,12 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
@@ -56,6 +63,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +74,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.platform
@@ -75,7 +85,13 @@ import com.sakethh.limae.ui.common.ConfirmationDialog
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.utils.LimaePreferences
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import limae.app.generated.resources.Res
+import limae.app.generated.resources.secretary_bird
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,6 +143,56 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
         settingsScreenVM.appSearchQuery.isNotBlank() && installedAppsState.data.isEmpty() &&
             !installedAppsState.isLoading
 
+    var showAccessibilityIconSizePreview by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var showImportExportProgressDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var importExportLabel by rememberSaveable {
+        mutableStateOf("Importing...")
+    }
+    LaunchedEffect(Unit) {
+        if (!onAndroid) return@LaunchedEffect
+
+        snapshotFlow {
+            LimaePreferences.accessibilityIconSize
+        }.drop(1).collectLatest {
+            showAccessibilityIconSizePreview = true
+            delay(1000L)
+            showAccessibilityIconSizePreview = false
+        }
+    }
+    val accessibilityIconSize by animateDpAsState(LimaePreferences.accessibilityIconSize.dp)
+    val isExportPathPicked =
+        !onAndroid || (onAndroid && LimaePreferences.exportDirPath.isNotBlank())
+
+    val exportComponent: @Composable () -> Unit = {
+        SettingComponent(
+            SettingComponentParam(
+                title = "Export",
+                doesDescriptionExists = true,
+                description = "Export drafts, dictionary, and blocklist to ${if (!onAndroid) "'Documents/Limae/Exports' as" else "a"} JSON file",
+                isSwitchNeeded = false,
+                isSwitchEnabled = LimaePreferences.autoSaveNotes,
+                onSwitchStateChange = {
+                    settingsScreenVM.performAction(
+                        SettingsScreenAction.ExportData(onStart = {
+                            importExportLabel = "Exporting..."
+                            showImportExportProgressDialog = true
+                        }, onCompletion = {
+                            showImportExportProgressDialog = false
+                        }),
+                    )
+                },
+                showIcon = true,
+                icon = Icons.DataObject,
+                showFilledIcon = true,
+            ),
+        )
+    }
+
     Scaffold(topBar = {
         LargeTopAppBar(title = {
             Text(
@@ -144,7 +210,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                 )
             }
         }, scrollBehavior = topAppBarScrollBehaviour)
-    }) { paddingValues ->
+    }, modifier = Modifier.fillMaxSize()) { paddingValues ->
         LazyColumn(
             contentPadding = paddingValues,
             modifier =
@@ -276,9 +342,9 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
             item {
                 SettingComponent(
                     SettingComponentParam(
-                        title = "Auto-save on writing",
+                        title = "Auto-save while typing",
                         doesDescriptionExists = true,
-                        description = "Limae will auto-save your notes while you're writing with the empty interval of 0.5 seconds during input key strokes.",
+                        description = "Limae auto-saves your drafts while you type, syncing at 0.5-second intervals during keystroke pauses.",
                         isSwitchNeeded = true,
                         isSwitchEnabled = LimaePreferences.autoSaveNotes,
                         onSwitchStateChange = {
@@ -294,9 +360,51 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         showIcon = false,
                     ),
                 )
-                Spacer(modifier = Modifier.height(if (onAndroid) 7.5.dp else 15.dp))
+                Spacer(modifier = Modifier.height(15.dp))
             }
             if (onAndroid) {
+                item {
+                    Column(modifier = Modifier.padding(start = 15.dp, end = 15.dp)) {
+                        Text(
+                            text = "Accessibility Overlay",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 15.dp),
+                            fontSize = 16.sp,
+                        )
+                        Row {
+                            Text(
+                                text = "Icon size — ",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontSize = 16.sp,
+                                modifier = Modifier.alignByBaseline(),
+                            )
+                            AnimatedContent(
+                                LimaePreferences.accessibilityIconSize.toString(),
+                            ) { iconSize ->
+                                Text(
+                                    text = iconSize,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.alignByBaseline(),
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(15.dp))
+
+                        Slider(
+                            value = LimaePreferences.accessibilityIconSize.toFloat(),
+                            onValueChange = {
+                                LimaePreferences.accessibilityIconSize = it.toInt()
+                            },
+                            valueRange = 45f..225f,
+                            steps = 45,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(5.dp))
+                }
+
                 item {
                     Row(
                         modifier =
@@ -324,7 +432,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         }
                     }
                     Text(
-                        text = "Limae will not show up nor process anything in the apps that are in the blocklist.",
+                        text = "Limae will not show up as a suggestion overlay nor process any text input in apps that are on the blocklist.",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.secondary,
                         modifier =
@@ -487,37 +595,49 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                 )
             }
             item {
-                SettingComponent(
-                    SettingComponentParam(
-                        title = "Import",
-                        doesDescriptionExists = true,
-                        description = "Import from the JSON file which is based on Limae Schema.",
-                        isSwitchNeeded = false,
-                        isSwitchEnabled = LimaePreferences.autoSaveNotes,
-                        onSwitchStateChange = {
-                            settingsScreenVM.performAction(
-                                SettingsScreenAction.ImportData(onCompletion = {
-                                }),
-                            )
-                        },
-                        showIcon = true,
-                        icon = Icons.DataObject,
-                        showFilledIcon = true,
-                    ),
-                )
-                Spacer(modifier = Modifier.height(15.dp))
+                AnimatedVisibility(isExportPathPicked) {
+                    SettingComponent(
+                        SettingComponentParam(
+                            title = "Auto-exports",
+                            doesDescriptionExists = true,
+                            description = "Limae auto-exports ${if (onAndroid) "" else "to 'Documents/Limae/Backups' "}on every create, update, or delete operation. This applies to drafts, the dictionary, and blocklist changes. A maximum of 25 backups are kept at any time.",
+                            isSwitchNeeded = true,
+                            isSwitchEnabled = LimaePreferences.useAutoExports,
+                            onSwitchStateChange = {
+                                LimaePreferences.useAutoExports = !LimaePreferences.useAutoExports
+                                settingsScreenVM.updatePreference(
+                                    preferenceKey =
+                                        Platform.Preferences.Key.BooleanPreferencesKey(
+                                            LimaePreferences.Key.USE_SNAPSHOTS.name,
+                                        ),
+                                    newValue = LimaePreferences.useAutoExports,
+                                )
+                            },
+                            showIcon = false,
+                            icon = Icons.DataObject,
+                            showFilledIcon = true,
+                        ),
+                    )
+                }
+                if (isExportPathPicked || !onAndroid) {
+                    Spacer(modifier = Modifier.height(22.dp))
+                }
             }
             item {
                 SettingComponent(
                     SettingComponentParam(
-                        title = "Export",
+                        title = "Import",
                         doesDescriptionExists = true,
-                        description = "Export Dictionary and Drafts to a JSON File.",
+                        description = "Import from a JSON file based on the Limae Schema",
                         isSwitchNeeded = false,
                         isSwitchEnabled = LimaePreferences.autoSaveNotes,
                         onSwitchStateChange = {
                             settingsScreenVM.performAction(
-                                SettingsScreenAction.ExportData(onCompletion = {
+                                SettingsScreenAction.ImportData(onStart = {
+                                    importExportLabel = "Importing..."
+                                    showImportExportProgressDialog = true
+                                }, onCompletion = {
+                                    showImportExportProgressDialog = false
                                 }),
                             )
                         },
@@ -526,7 +646,66 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         showFilledIcon = true,
                     ),
                 )
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(22.dp))
+            }
+            item {
+                AnimatedVisibility(!onAndroid && isExportPathPicked) {
+                    exportComponent()
+                }
+                if (onAndroid) {
+                    Column(
+                        modifier =
+                            Modifier
+                                .padding(
+                                    start = 15.dp,
+                                    end = 15.dp,
+                                ).then(
+                                    if (isExportPathPicked) {
+                                        Modifier
+                                            .clip(RoundedCornerShape(25.dp))
+                                            .border(
+                                                width = 1.5.dp,
+                                                color = MaterialTheme.colorScheme.outline.copy(0.15f),
+                                                shape = RoundedCornerShape(25.dp),
+                                            )
+                                    } else {
+                                        Modifier
+                                    },
+                                ),
+                    ) {
+                        Spacer(modifier = Modifier.height(15.dp))
+                        exportComponent()
+                        Column(Modifier.padding(15.dp)) {
+                            Text(
+                                text = "Current export path",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.secondary,
+                            )
+                            Spacer(Modifier.height(2.5.dp))
+                            Text(
+                                text = LimaePreferences.exportDirPath,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.secondary,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FilledTonalButton(
+                                onClick = {
+                                    settingsScreenVM.performAction(SettingsScreenAction.PickADirectory)
+                                },
+                                modifier =
+                                    Modifier
+                                        .showHandOnHover()
+                                        .fillMaxWidth(),
+                            ) {
+                                Text(
+                                    text = "Choose an export location",
+                                    style = MaterialTheme.typography.titleSmall,
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(if (!isExportPathPicked) 22.dp else 18.dp))
             }
             item {
                 SettingComponent(
@@ -544,7 +723,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         showFilledIcon = true,
                     ),
                 )
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(20.dp))
             }
             stickyHeader {
                 Column(
@@ -566,7 +745,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         fontSize = 16.sp,
                     )
                     Text(
-                        text = "The dictionary includes your custom strings that will not be suggested for replacement by the engines used by Limae.",
+                        text = "The dictionary contains your custom strings, which Limae will filter out during suggestions.",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.padding(start = 15.dp, end = 15.dp, bottom = 7.5.dp),
@@ -678,6 +857,26 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
             }
         }
     }
+    AnimatedVisibility(showAccessibilityIconSizePreview, enter = fadeIn(), exit = fadeOut()) {
+        Box(
+            modifier =
+                Modifier
+                    .clickable(enabled = false, onClick = {})
+                    .zIndex(100f)
+                    .background(MaterialTheme.colorScheme.surface.copy(0.9f))
+                    .fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.secretary_bird),
+                contentDescription = null,
+                modifier =
+                    Modifier
+                        .size(accessibilityIconSize)
+                        .clip(CircleShape),
+            )
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
     val hideBtmSheet: () -> Unit = {
         coroutineScope
@@ -694,8 +893,11 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                 showDeleteAllDictStringsDialogBox = false
             },
             onConfirm = {
-                settingsScreenVM.performAction(SettingsScreenAction.DeleteAllStringsFromDictionary)
-                showDeleteAllDictStringsDialogBox = false
+                settingsScreenVM.performAction(
+                    SettingsScreenAction.DeleteAllStringsFromDictionary(onCompletion = {
+                        showDeleteAllDictStringsDialogBox = false
+                    }),
+                )
             },
             confirmText = "Delete All",
             title = "Do you really want to delete all the custom strings?",
@@ -707,11 +909,50 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                 showDeleteAllDraftsDialogBox = false
             },
             onConfirm = {
-                settingsScreenVM.performAction(SettingsScreenAction.DeleteAllDrafts)
-                showDeleteAllDraftsDialogBox = false
+                settingsScreenVM.performAction(
+                    SettingsScreenAction.DeleteAllDrafts(onCompletion = {
+                        showDeleteAllDraftsDialogBox = false
+                    }),
+                )
             },
             confirmText = "Delete All",
             title = "Do you really want to delete all the drafts?",
+        )
+    }
+    if (showImportExportProgressDialog) {
+        BasicAlertDialog(
+            onDismissRequest = {},
+            modifier = Modifier,
+            properties =
+                DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false,
+                ),
+            content = {
+                Column(
+                    modifier =
+                        Modifier
+                            .clip(AlertDialogDefaults.shape)
+                            .background(AlertDialogDefaults.containerColor)
+                            .padding(25.dp),
+                ) {
+                    Text(
+                        text = importExportLabel,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontSize = 26.sp,
+                        color = AlertDialogDefaults.titleContentColor,
+                    )
+                    Spacer(Modifier.height(5.dp))
+                    Text(
+                        text = "This might take a moment. Hold on!",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontSize = 18.sp,
+                        color = AlertDialogDefaults.textContentColor,
+                    )
+                    Spacer(Modifier.height(15.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+            },
         )
     }
 

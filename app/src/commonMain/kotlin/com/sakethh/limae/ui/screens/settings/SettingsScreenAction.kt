@@ -12,9 +12,15 @@ sealed interface SettingsScreenAction {
         val onCompletion: () -> Unit,
     ) : SettingsScreenAction
 
-    data object DeleteAllStringsFromDictionary : SettingsScreenAction
+    data class DeleteAllStringsFromDictionary(
+        val onCompletion: () -> Unit,
+    ) : SettingsScreenAction
 
-    data object DeleteAllDrafts : SettingsScreenAction
+    data class DeleteAllDrafts(
+        val onCompletion: () -> Unit,
+    ) : SettingsScreenAction
+
+    data object PickADirectory : SettingsScreenAction
 
     data class UpdateAppSearchQuery(
         val string: String,
@@ -25,10 +31,12 @@ sealed interface SettingsScreenAction {
     ) : SettingsScreenAction
 
     data class ExportData(
+        val onStart: () -> Unit,
         val onCompletion: () -> Unit,
     ) : SettingsScreenAction
 
     data class ImportData(
+        val onStart: () -> Unit,
         val onCompletion: () -> Unit,
     ) : SettingsScreenAction
 }

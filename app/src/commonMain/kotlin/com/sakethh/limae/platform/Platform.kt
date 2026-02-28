@@ -1,6 +1,8 @@
 package com.sakethh.limae.platform
 
 import androidx.compose.runtime.Stable
+import com.sakethh.limae.domain.ExportType
+import com.sakethh.limae.domain.Result
 
 interface Platform {
     val version: Int?
@@ -13,11 +15,17 @@ interface Platform {
         Web,
     }
 
-    /** Should only be used to inject context-sensitive functionality via implementation,
-     i.e., when it requires properties that aren't usually available through expect/actual implementations.
+    /**
+     Instead of using expect/actual, i'm implementing these stuff purely via DI,
+     just because I can.
+
+     Although event-driven implementation(s) can be done with kotlin flows and expect/actual (i did that in Linkora),
+     i want to do it like _this_ with Limae.
      */
     interface Actions {
         fun openAccessibilitySettings()
+
+        suspend fun pickADirectory(): String?
 
         @Stable
         data class InstalledApp(
@@ -27,9 +35,13 @@ interface Platform {
 
         suspend fun getInstalledApps(): List<InstalledApp> = emptyList()
 
-        suspend fun exportData(content: String)
+        suspend fun exportData(
+            exportType: ExportType,
+            dirPath: String,
+            content: String,
+        ): Result<Unit>
 
-        suspend fun importData(): String
+        suspend fun importData(): Result<String?>
     }
 
     interface Preferences {

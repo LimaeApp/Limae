@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sakethh.limae.domain.ExportType
+import com.sakethh.limae.domain.onFailure
 import com.sakethh.limae.domain.onSuccess
 import com.sakethh.limae.domain.repository.AppBlocklistRepo
 import com.sakethh.limae.domain.repository.DatabaseUtilsRepo
@@ -15,8 +17,11 @@ import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.utils.LimaeJson
+import com.sakethh.limae.utils.LimaePreferences
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
@@ -131,15 +136,21 @@ class SettingsScreenVM(
             }
 
             is SettingsScreenAction.DeleteAllStringsFromDictionary -> {
-                viewModelScope.launch {
-                    suggestionsRepo.deleteAllStringsFromDictionary()
-                }
+                viewModelScope
+                    .launch {
+                        suggestionsRepo.deleteAllStringsFromDictionary()
+                    }.invokeOnCompletion {
+                        settingsScreenAction.onCompletion()
+                    }
             }
 
             is SettingsScreenAction.DeleteAllDrafts -> {
-                viewModelScope.launch {
-                    notesRepo.deleteAllNotes()
-                }
+                viewModelScope
+                    .launch {
+                        notesRepo.deleteAllNotes()
+                    }.invokeOnCompletion {
+                        settingsScreenAction.onCompletion()
+                    }
             }
 
             is SettingsScreenAction.UpdateAppSearchQuery -> {
@@ -160,8 +171,13 @@ class SettingsScreenVM(
             is SettingsScreenAction.ExportData -> {
                 viewModelScope
                     .launch {
+                        settingsScreenAction.onStart()
                         databaseUtilsRepo.getExportData().onSuccess { (exportObject) ->
-                            platformActions.exportData(LimaeJson.encodeToString(exportObject))
+                            platformActions.exportData(
+                                dirPath = LimaePreferences.exportDirPath,
+                                exportType = ExportType.Standard,
+                                content = LimaeJson.encodeToString(exportObject),
+                            )
                         }
                     }.invokeOnCompletion {
                         settingsScreenAction.onCompletion()
@@ -171,10 +187,54 @@ class SettingsScreenVM(
             is SettingsScreenAction.ImportData -> {
                 viewModelScope
                     .launch {
-                        databaseUtilsRepo.importData(LimaeJson.decodeFromString(platformActions.importData()))
+                        platformActions
+                            .importData()
+                            .onSuccess { (rawImportContent) ->
+                                settingsScreenAction.onStart()
+                                if (rawImportContent != null) {
+                                    databaseUtilsRepo.importData(
+                                        rawImportContent,
+                                    )
+                                }
+                            }.onFailure {
+                                it.printStackTrace()
+                                println(it.message)
+                            }
                     }.invokeOnCompletion {
                         settingsScreenAction.onCompletion()
                     }
+            }
+
+            SettingsScreenAction.PickADirectory -> {
+                viewModelScope.launch {
+                    platformActions.pickADirectory()?.let { dirPath ->
+                        LimaePreferences.exportDirPath = dirPath
+
+                        preferencesRepo.writePreferenceValue(
+                            preferenceKey =
+                                Platform.Preferences.Key.StringPreferencesKey(
+                                    LimaePreferences.Key.EXPORT_DIR_PATH.name,
+                                ),
+                            newValue = dirPath,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    init {
+        viewModelScope.launch {
+            snapshotFlow {
+                LimaePreferences.accessibilityIconSize
+            }.distinctUntilChanged().debounce(1000).collectLatest { accessibilityIconSize ->
+                preferencesRepo.writePreferenceValue(
+                    preferenceKey =
+                        Platform.Preferences.Key.IntPreferencesKey(
+                            LimaePreferences.Key.ACCESSIBILITY_ICON_SIZE.name,
+                        ),
+                    newValue = accessibilityIconSize,
+                )
             }
         }
     }

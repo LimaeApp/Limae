@@ -3,10 +3,13 @@ package com.sakethh.limae
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.sakethh.limae.di.initializeKoin
+import com.sakethh.limae.domain.ExportType
+import com.sakethh.limae.domain.Result
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.ui.Limae
 import com.sakethh.limae.ui.theme.LimaeTheme
 import com.sakethh.limae.utils.LimaePreferences
+import com.sakethh.limae.utils.runSafe
 import kotlinx.browser.localStorage
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -22,9 +25,15 @@ suspend fun main() {
                     object : Platform.Actions {
                         override fun openAccessibilitySettings() = Unit
 
-                        override suspend fun exportData(content: String) = Unit
+                        override suspend fun pickADirectory(): String? = null
 
-                        override suspend fun importData(): String = ""
+                        override suspend fun exportData(
+                            exportType: ExportType,
+                            dirPath: String,
+                            content: String,
+                        ): Result<Unit> = runSafe { }
+
+                        override suspend fun importData(): Result<String?> = runSafe { null }
                     }
                 }.bind<Platform.Actions>()
             },

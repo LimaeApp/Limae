@@ -126,6 +126,4 @@ actual fun dynamicLightTheme(): ColorScheme = lightColorScheme()
 @Composable
 actual fun dynamicDarkTheme(): ColorScheme = darkColorScheme()
 
-actual fun platformDataPreferencesModule() = module {}
-
 actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> = flowOf(true)

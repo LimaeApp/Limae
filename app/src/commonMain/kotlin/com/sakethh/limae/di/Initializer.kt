@@ -1,13 +1,11 @@
 package com.sakethh.limae.di
 
-import com.sakethh.limae.platform.platformDataPreferencesModule
 import com.sakethh.limae.platform.platformDatabaseModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 
 suspend fun initializeKoin(externalDependencies: KoinAppDeclaration? = null) {
     val platformDatabaseModule = platformDatabaseModule()
-    val platformDataPreferencesModule = platformDataPreferencesModule()
     startKoin {
         // the modules which are further used should be invoked first
         // eg: androidContext() from android platform should be
@@ -19,7 +17,6 @@ suspend fun initializeKoin(externalDependencies: KoinAppDeclaration? = null) {
 
         modules(
             platformDatabaseModule,
-            platformDataPreferencesModule,
             notesModule,
             suggestionsModule,
             sharedDatabaseModule,

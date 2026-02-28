@@ -66,7 +66,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.platform
@@ -176,7 +175,10 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                                 LimaePreferences.useSystemTheme = !LimaePreferences.useSystemTheme
 
                                 settingsScreenVM.updatePreference(
-                                    preferenceKey = booleanPreferencesKey(LimaePreferences.Key.USE_SYSTEM_THEME.name),
+                                    preferenceKey =
+                                        Platform.Preferences.Key.BooleanPreferencesKey(
+                                            LimaePreferences.Key.USE_SYSTEM_THEME.name,
+                                        ),
                                     newValue = LimaePreferences.useSystemTheme,
                                 )
                             },
@@ -198,7 +200,10 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                             onSwitchStateChange = {
                                 LimaePreferences.useDarkTheme = !LimaePreferences.useDarkTheme
                                 settingsScreenVM.updatePreference(
-                                    preferenceKey = booleanPreferencesKey(LimaePreferences.Key.USE_DARK_THEME.name),
+                                    preferenceKey =
+                                        Platform.Preferences.Key.BooleanPreferencesKey(
+                                            LimaePreferences.Key.USE_DARK_THEME.name,
+                                        ),
                                     newValue = LimaePreferences.useDarkTheme,
                                 )
                             },
@@ -220,7 +225,10 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                             onSwitchStateChange = {
                                 LimaePreferences.useAmoledTheme = !LimaePreferences.useAmoledTheme
                                 settingsScreenVM.updatePreference(
-                                    preferenceKey = booleanPreferencesKey(LimaePreferences.Key.USE_AMOLED_THEME.name),
+                                    preferenceKey =
+                                        Platform.Preferences.Key.BooleanPreferencesKey(
+                                            LimaePreferences.Key.USE_AMOLED_THEME.name,
+                                        ),
                                     newValue = LimaePreferences.useAmoledTheme,
                                 )
                             },
@@ -243,7 +251,10 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                                 LimaePreferences.useDynamicTheming =
                                     !LimaePreferences.useDynamicTheming
                                 settingsScreenVM.updatePreference(
-                                    preferenceKey = booleanPreferencesKey(LimaePreferences.Key.USE_DYNAMIC_THEME.name),
+                                    preferenceKey =
+                                        Platform.Preferences.Key.BooleanPreferencesKey(
+                                            LimaePreferences.Key.USE_DYNAMIC_THEME.name,
+                                        ),
                                     newValue = LimaePreferences.useDynamicTheming,
                                 )
                             },
@@ -273,7 +284,10 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         onSwitchStateChange = {
                             LimaePreferences.autoSaveNotes = !LimaePreferences.autoSaveNotes
                             settingsScreenVM.updatePreference(
-                                preferenceKey = booleanPreferencesKey(LimaePreferences.Key.AUTO_SAVE_NOTE.name),
+                                preferenceKey =
+                                    Platform.Preferences.Key.BooleanPreferencesKey(
+                                        LimaePreferences.Key.AUTO_SAVE_NOTE.name,
+                                    ),
                                 newValue = LimaePreferences.autoSaveNotes,
                             )
                         },
@@ -471,6 +485,48 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                     modifier = Modifier.padding(start = 15.dp, end = 15.dp, bottom = 15.dp),
                     fontSize = 16.sp,
                 )
+            }
+            item {
+                SettingComponent(
+                    SettingComponentParam(
+                        title = "Import",
+                        doesDescriptionExists = true,
+                        description = "Import from the JSON file which is based on Limae Schema.",
+                        isSwitchNeeded = false,
+                        isSwitchEnabled = LimaePreferences.autoSaveNotes,
+                        onSwitchStateChange = {
+                            settingsScreenVM.performAction(
+                                SettingsScreenAction.ImportData(onCompletion = {
+                                }),
+                            )
+                        },
+                        showIcon = true,
+                        icon = Icons.DataObject,
+                        showFilledIcon = true,
+                    ),
+                )
+                Spacer(modifier = Modifier.height(15.dp))
+            }
+            item {
+                SettingComponent(
+                    SettingComponentParam(
+                        title = "Export",
+                        doesDescriptionExists = true,
+                        description = "Export Dictionary and Drafts to a JSON File.",
+                        isSwitchNeeded = false,
+                        isSwitchEnabled = LimaePreferences.autoSaveNotes,
+                        onSwitchStateChange = {
+                            settingsScreenVM.performAction(
+                                SettingsScreenAction.ExportData(onCompletion = {
+                                }),
+                            )
+                        },
+                        showIcon = true,
+                        icon = Icons.DataObject,
+                        showFilledIcon = true,
+                    ),
+                )
+                Spacer(modifier = Modifier.height(15.dp))
             }
             item {
                 SettingComponent(

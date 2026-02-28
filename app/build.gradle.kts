@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     id("app.cash.sqldelight") version "2.2.1"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
+    kotlin("plugin.serialization") version "2.0.20"
 }
 
 kotlin {
@@ -37,6 +37,10 @@ kotlin {
 
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
+            implementation(libs.androidx.documentfile)
+
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
         }
 
         commonMain.dependencies {
@@ -56,13 +60,11 @@ kotlin {
             implementation("app.cash.sqldelight:runtime:2.2.1")
             implementation("app.cash.sqldelight:coroutines-extensions:2.2.1")
             implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
 
             api(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
-
-            implementation(libs.androidx.datastore)
-            implementation(libs.androidx.datastore.preferences)
         }
 
         commonTest.dependencies {
@@ -75,10 +77,14 @@ kotlin {
             implementation("org.languagetool:languagetool-core:6.7")
             implementation("org.languagetool:language-en:6.7")
             implementation("app.cash.sqldelight:sqlite-driver:2.2.1")
+
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
         }
         webMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
             implementation("app.cash.sqldelight:web-worker-driver:2.2.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-browser:0.5.0")
         }
     }
 }

@@ -23,8 +23,6 @@ expect val LimaeIODispatcher: CoroutineDispatcher
 
 expect suspend fun platformDatabaseModule(): Module
 
-expect fun platformDataPreferencesModule(): Module
-
 @Composable
 expect fun dynamicLightTheme(): ColorScheme
 

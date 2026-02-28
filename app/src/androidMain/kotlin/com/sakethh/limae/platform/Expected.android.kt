@@ -88,20 +88,5 @@ actual fun dynamicDarkTheme(): ColorScheme =
         darkColorScheme()
     }
 
-actual fun platformDataPreferencesModule() =
-    module {
-        single {
-            PreferenceDataStoreFactory.createWithPath(
-                produceFile = {
-                    androidContext()
-                        .filesDir
-                        .resolve(Constants.DATA_STORE_PREF_NAME)
-                        .absolutePath
-                        .toPath()
-                },
-            )
-        }.bind<DataStore<Preferences>>()
-    }
-
 actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> =
     ReadTextFieldAccessibilityService.connected

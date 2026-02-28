@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -108,3 +109,9 @@ fun Modifier.addEdgeToEdgeScaffoldPadding(paddingValues: PaddingValues) =
                 ),
             end = paddingValues.calculateEndPadding(LayoutDirection.Rtl),
         ).consumeWindowInsets(paddingValues)
+
+val LimaeJson =
+    Json {
+        encodeDefaults = true
+        ignoreUnknownKeys = true
+    }

@@ -1,14 +1,14 @@
 package com.sakethh.limae.domain.repository
 
-import androidx.datastore.preferences.core.Preferences
+import com.sakethh.limae.platform.Platform
 
 interface PreferencesRepo {
     suspend fun <T> writePreferenceValue(
-        preferenceKey: Preferences.Key<T>,
+        preferenceKey: Platform.Preferences.Key<T>,
         newValue: T,
     )
 
-    suspend fun <T> getPreferenceValue(preferenceKey: Preferences.Key<T>): T?
+    suspend fun <T> getPreferenceValue(preferenceKey: Platform.Preferences.Key<T>): T?
 
-    suspend fun getAllPreferences(): Preferences
+    suspend fun getAllPreferences(): Map<Platform.Preferences.Key<*>, *>
 }

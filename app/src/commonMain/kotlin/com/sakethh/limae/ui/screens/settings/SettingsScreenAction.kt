@@ -23,4 +23,12 @@ sealed interface SettingsScreenAction {
     data class OnBlockAnApp(
         val packageName: String,
     ) : SettingsScreenAction
+
+    data class ExportData(
+        val onCompletion: () -> Unit,
+    ) : SettingsScreenAction
+
+    data class ImportData(
+        val onCompletion: () -> Unit,
+    ) : SettingsScreenAction
 }

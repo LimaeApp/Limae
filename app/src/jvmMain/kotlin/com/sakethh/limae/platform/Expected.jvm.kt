@@ -89,13 +89,4 @@ actual fun dynamicLightTheme(): ColorScheme = lightColorScheme()
 @Composable
 actual fun dynamicDarkTheme(): ColorScheme = darkColorScheme()
 
-actual fun platformDataPreferencesModule() =
-    module {
-        single {
-            PreferenceDataStoreFactory.createWithPath(
-                produceFile = { "${limaeSpecificFolder.absolutePath}/${Constants.DATA_STORE_PREF_NAME}".toPath() },
-            )
-        }.bind<DataStore<Preferences>>()
-    }
-
 actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> = flowOf(true)

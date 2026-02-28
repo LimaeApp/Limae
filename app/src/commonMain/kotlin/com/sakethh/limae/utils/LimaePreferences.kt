@@ -3,10 +3,8 @@ package com.sakethh.limae.utils
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import com.sakethh.limae.domain.repository.PreferencesRepo
+import com.sakethh.limae.platform.Platform
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.reflect.KMutableProperty0
@@ -19,7 +17,7 @@ object LimaePreferences : KoinComponent {
 
     var autoSaveNotes by mutableStateOf(true)
 
-    enum class Primitives {
+    enum class Primitive {
         Int,
         String,
         Boolean,
@@ -31,13 +29,13 @@ object LimaePreferences : KoinComponent {
      */
     enum class Key(
         val state: KMutableProperty0<*>,
-        val stateType: Primitives,
+        val stateType: Primitive,
     ) {
-        USE_DARK_THEME(::useDarkTheme, Primitives.Boolean),
-        USE_SYSTEM_THEME(::useSystemTheme, Primitives.Boolean),
-        USE_AMOLED_THEME(::useAmoledTheme, Primitives.Boolean),
-        USE_DYNAMIC_THEME(::useDynamicTheming, Primitives.Boolean),
-        AUTO_SAVE_NOTE(::autoSaveNotes, Primitives.Boolean),
+        USE_DARK_THEME(::useDarkTheme, Primitive.Boolean),
+        USE_SYSTEM_THEME(::useSystemTheme, Primitive.Boolean),
+        USE_AMOLED_THEME(::useAmoledTheme, Primitive.Boolean),
+        USE_DYNAMIC_THEME(::useDynamicTheming, Primitive.Boolean),
+        AUTO_SAVE_NOTE(::autoSaveNotes, Primitive.Boolean),
     }
 
     private val preferencesRepo by inject<PreferencesRepo>()
@@ -50,9 +48,9 @@ object LimaePreferences : KoinComponent {
         Key.entries.forEach { preference ->
             val preferenceKey =
                 when (preference.stateType) {
-                    Primitives.Int -> intPreferencesKey(preference.name)
-                    Primitives.String -> stringPreferencesKey(preference.name)
-                    Primitives.Boolean -> booleanPreferencesKey(preference.name)
+                    Primitive.Int -> Platform.Preferences.Key.IntPreferencesKey(preference.name)
+                    Primitive.String -> Platform.Preferences.Key.StringPreferencesKey(preference.name)
+                    Primitive.Boolean -> Platform.Preferences.Key.BooleanPreferencesKey(preference.name)
                 }
 
             val persistedValue = preferences[preferenceKey] ?: return@forEach

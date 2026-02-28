@@ -4,15 +4,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sakethh.limae.domain.onSuccess
 import com.sakethh.limae.domain.repository.AppBlocklistRepo
+import com.sakethh.limae.domain.repository.DatabaseUtilsRepo
 import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.domain.repository.PreferencesRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.ui.common.ItemState
+import com.sakethh.limae.utils.LimaeJson
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
@@ -27,6 +29,7 @@ class SettingsScreenVM(
     private val preferencesRepo: PreferencesRepo,
     private val platformActions: Platform.Actions,
     private val appBlocklistRepo: AppBlocklistRepo,
+    private val databaseUtilsRepo: DatabaseUtilsRepo,
 ) : ViewModel() {
     var appSearchQuery by mutableStateOf("")
         private set
@@ -153,11 +156,31 @@ class SettingsScreenVM(
                     }
                 }
             }
+
+            is SettingsScreenAction.ExportData -> {
+                viewModelScope
+                    .launch {
+                        databaseUtilsRepo.getExportData().onSuccess { (exportObject) ->
+                            platformActions.exportData(LimaeJson.encodeToString(exportObject))
+                        }
+                    }.invokeOnCompletion {
+                        settingsScreenAction.onCompletion()
+                    }
+            }
+
+            is SettingsScreenAction.ImportData -> {
+                viewModelScope
+                    .launch {
+                        databaseUtilsRepo.importData(LimaeJson.decodeFromString(platformActions.importData()))
+                    }.invokeOnCompletion {
+                        settingsScreenAction.onCompletion()
+                    }
+            }
         }
     }
 
     fun <T> updatePreference(
-        preferenceKey: Preferences.Key<T>,
+        preferenceKey: Platform.Preferences.Key<T>,
         newValue: T,
     ) {
         viewModelScope.launch {

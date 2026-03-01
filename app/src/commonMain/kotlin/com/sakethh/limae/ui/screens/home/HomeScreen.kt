@@ -395,7 +395,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
         }
     }
 
-    if (false && !isReadTextFieldAccessibilityServiceRunning) {
+    if (!isReadTextFieldAccessibilityServiceRunning) {
         ModalBottomSheet(
             onDismissRequest = {},
             sheetState = accessibilityServiceNoticeBtmSheet,

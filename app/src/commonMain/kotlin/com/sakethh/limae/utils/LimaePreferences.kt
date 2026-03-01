@@ -20,7 +20,6 @@ object LimaePreferences : KoinComponent {
     var useAutoExports by mutableStateOf(false)
 
     var accessibilityIconSize by mutableIntStateOf(45)
-
     var exportDirPath by mutableStateOf("")
 
     enum class Primitive {

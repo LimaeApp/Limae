@@ -15,6 +15,7 @@ import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.domain.repository.PreferencesRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.platform.Platform
+import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.utils.LimaeJson
 import com.sakethh.limae.utils.LimaePreferences
@@ -118,18 +119,32 @@ class SettingsScreenVM(
         when (settingsScreenAction) {
             is SettingsScreenAction.DeleteItemFromDictionary -> {
                 viewModelScope.launch {
-                    suggestionsRepo.deleteAnItemFromDictionary(
-                        dictionary = settingsScreenAction.dictionaryItem,
-                    )
+                    suggestionsRepo
+                        .deleteAnItemFromDictionary(
+                            dictionary = settingsScreenAction.dictionaryItem,
+                        ).onFailure(LimaeAction::reportError)
+                        .onSuccess {
+                            LimaeAction.reportMessage(
+                                "\"${settingsScreenAction.dictionaryItem.string}\" has been deleted from your dictionary",
+                            )
+                        }
                 }
             }
 
             is SettingsScreenAction.AddStringsToDictionary -> {
                 viewModelScope
                     .launch {
-                        suggestionsRepo.addStringsToDictionary(
-                            customStrings = settingsScreenAction.string.split("\n"),
-                        )
+                        val customStrings = settingsScreenAction.string.split("\n")
+                        val customStringsSize = customStrings.size
+                        suggestionsRepo
+                            .addStringsToDictionary(
+                                customStrings = customStrings,
+                            ).onFailure(LimaeAction::reportError)
+                            .onSuccess {
+                                LimaeAction.reportMessage(
+                                    "Added $customStringsSize ${if (customStringsSize == 1) "string" else "strings"} to your dictionary",
+                                )
+                            }
                     }.invokeOnCompletion {
                         settingsScreenAction.onCompletion()
                     }
@@ -138,7 +153,11 @@ class SettingsScreenVM(
             is SettingsScreenAction.DeleteAllStringsFromDictionary -> {
                 viewModelScope
                     .launch {
-                        suggestionsRepo.deleteAllStringsFromDictionary()
+                        suggestionsRepo
+                            .deleteAllStringsFromDictionary()
+                            .onSuccess {
+                                LimaeAction.reportMessage("Deleted all the custom stings from your dictionary successfully")
+                            }.onFailure(LimaeAction::reportError)
                     }.invokeOnCompletion {
                         settingsScreenAction.onCompletion()
                     }
@@ -147,7 +166,9 @@ class SettingsScreenVM(
             is SettingsScreenAction.DeleteAllDrafts -> {
                 viewModelScope
                     .launch {
-                        notesRepo.deleteAllNotes()
+                        notesRepo.deleteAllNotes().onFailure(LimaeAction::reportError).onSuccess {
+                            LimaeAction.reportMessage("Deleted all the notes successfully")
+                        }
                     }.invokeOnCompletion {
                         settingsScreenAction.onCompletion()
                     }
@@ -161,9 +182,13 @@ class SettingsScreenVM(
             is SettingsScreenAction.OnBlockAnApp -> {
                 viewModelScope.launch {
                     if (appBlockList.value.contains(settingsScreenAction.packageName)) {
-                        appBlocklistRepo.unblockAnApp(settingsScreenAction.packageName)
+                        appBlocklistRepo
+                            .unblockAnApp(settingsScreenAction.packageName)
+                            .onFailure(LimaeAction::reportError)
                     } else {
-                        appBlocklistRepo.blockAnApp(settingsScreenAction.packageName)
+                        appBlocklistRepo
+                            .blockAnApp(settingsScreenAction.packageName)
+                            .onFailure(LimaeAction::reportError)
                     }
                 }
             }
@@ -172,13 +197,19 @@ class SettingsScreenVM(
                 viewModelScope
                     .launch {
                         settingsScreenAction.onStart()
-                        databaseUtilsRepo.getExportData().onSuccess { (exportObject) ->
-                            platformActions.exportData(
-                                dirPath = LimaePreferences.exportDirPath,
-                                exportType = ExportType.Standard,
-                                content = LimaeJson.encodeToString(exportObject),
-                            )
-                        }
+                        databaseUtilsRepo
+                            .getExportData()
+                            .onSuccess { (exportObject) ->
+                                platformActions
+                                    .exportData(
+                                        dirPath = LimaePreferences.exportDirPath,
+                                        exportType = ExportType.Standard,
+                                        content = LimaeJson.encodeToString(exportObject),
+                                    ).onFailure(LimaeAction::reportError)
+                                    .onSuccess {
+                                        LimaeAction.reportMessage("Exported the data successfully")
+                                    }
+                            }.onFailure(LimaeAction::reportError)
                     }.invokeOnCompletion {
                         settingsScreenAction.onCompletion()
                     }
@@ -192,14 +223,15 @@ class SettingsScreenVM(
                             .onSuccess { (rawImportContent) ->
                                 settingsScreenAction.onStart()
                                 if (rawImportContent != null) {
-                                    databaseUtilsRepo.importData(
-                                        rawImportContent,
-                                    )
+                                    databaseUtilsRepo
+                                        .importData(
+                                            rawImportContent,
+                                        ).onFailure(LimaeAction::reportError)
+                                        .onSuccess {
+                                            LimaeAction.reportMessage("Imported the data successfully")
+                                        }
                                 }
-                            }.onFailure {
-                                it.printStackTrace()
-                                println(it.message)
-                            }
+                            }.onFailure(LimaeAction::reportError)
                     }.invokeOnCompletion {
                         settingsScreenAction.onCompletion()
                     }
@@ -210,13 +242,14 @@ class SettingsScreenVM(
                     platformActions.pickADirectory()?.let { dirPath ->
                         LimaePreferences.exportDirPath = dirPath
 
-                        preferencesRepo.writePreferenceValue(
-                            preferenceKey =
-                                Platform.Preferences.Key.StringPreferencesKey(
-                                    LimaePreferences.Key.EXPORT_DIR_PATH.name,
-                                ),
-                            newValue = dirPath,
-                        )
+                        preferencesRepo
+                            .writePreferenceValue(
+                                preferenceKey =
+                                    Platform.Preferences.Key.StringPreferencesKey(
+                                        LimaePreferences.Key.EXPORT_DIR_PATH.name,
+                                    ),
+                                newValue = dirPath,
+                            ).onFailure(LimaeAction::reportError)
                     }
                 }
             }
@@ -228,13 +261,14 @@ class SettingsScreenVM(
             snapshotFlow {
                 LimaePreferences.accessibilityIconSize
             }.distinctUntilChanged().debounce(1000).collectLatest { accessibilityIconSize ->
-                preferencesRepo.writePreferenceValue(
-                    preferenceKey =
-                        Platform.Preferences.Key.IntPreferencesKey(
-                            LimaePreferences.Key.ACCESSIBILITY_ICON_SIZE.name,
-                        ),
-                    newValue = accessibilityIconSize,
-                )
+                preferencesRepo
+                    .writePreferenceValue(
+                        preferenceKey =
+                            Platform.Preferences.Key.IntPreferencesKey(
+                                LimaePreferences.Key.ACCESSIBILITY_ICON_SIZE.name,
+                            ),
+                        newValue = accessibilityIconSize,
+                    ).onFailure(LimaeAction::reportError)
             }
         }
     }
@@ -244,10 +278,11 @@ class SettingsScreenVM(
         newValue: T,
     ) {
         viewModelScope.launch {
-            preferencesRepo.writePreferenceValue(
-                preferenceKey = preferenceKey,
-                newValue = newValue,
-            )
+            preferencesRepo
+                .writePreferenceValue(
+                    preferenceKey = preferenceKey,
+                    newValue = newValue,
+                ).onFailure(LimaeAction::reportError)
         }
     }
 }

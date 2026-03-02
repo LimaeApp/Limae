@@ -6,9 +6,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sakethh.limae.domain.onFailure
 import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.isReadTextFieldAccessibilityServiceRunning
+import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.ItemState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flatMapLatest
@@ -97,7 +99,7 @@ class HomeScreenVM(
     ) {
         viewModelScope
             .launch {
-                notesRepo.deleteANoteById(id)
+                notesRepo.deleteANoteById(id).onFailure(LimaeAction::reportError)
             }.invokeOnCompletion {
                 onCompletion()
             }

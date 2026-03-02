@@ -18,6 +18,7 @@ import com.sakethh.limae.domain.onFailure
 import com.sakethh.limae.domain.onSuccess
 import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
+import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.common.KeyEventTunnel
 import com.sakethh.limae.utils.LimaePreferences
@@ -178,7 +179,11 @@ class NoteScreenVM(
 
             is NoteScreenAction.AddStringToDictionary -> {
                 viewModelScope.launch {
-                    suggestionsRepo.addStringsToDictionary(listOf(noteScreenAction.string))
+                    suggestionsRepo
+                        .addStringsToDictionary(listOf(noteScreenAction.string))
+                        .onFailure(
+                            LimaeAction::reportError,
+                        )
                 }
             }
         }
@@ -207,7 +212,7 @@ class NoteScreenVM(
                             id = insertedRowId,
                             lastModified = eventTimestamp,
                         )
-                }
+                }.onFailure(LimaeAction::reportError)
         } else {
             notesRepo
                 .updateANoteById(
@@ -217,7 +222,7 @@ class NoteScreenVM(
                 ).onSuccess { result ->
                     val eventTimestamp = result.data
                     note = note.copy(lastModified = eventTimestamp)
-                }
+                }.onFailure(LimaeAction::reportError)
         }
         onCompletion()
         isSavingANote = false
@@ -226,9 +231,11 @@ class NoteScreenVM(
     init {
         viewModelScope.launch {
             if (sourceNoteId != null) {
-                notesRepo.getANoteById(sourceNoteId).onSuccess {
-                    note = it.data
-                }
+                notesRepo
+                    .getANoteById(sourceNoteId)
+                    .onSuccess {
+                        note = it.data
+                    }.onFailure(LimaeAction::reportError)
             }
             if (LimaePreferences.autoSaveNotes) {
                 snapshotFlow {
@@ -262,7 +269,7 @@ class NoteScreenVM(
                                     _suggestions.onSuccess(suggestionBundles)
                                 }.onFailure(
                                     _suggestions::onFailure,
-                                )
+                                ).onFailure(LimaeAction::reportError)
                         }
                     }
                     launch {
@@ -281,7 +288,7 @@ class NoteScreenVM(
                                     _suggestions.onSuccess(suggestionBundles)
                                 }.onFailure(
                                     _suggestions::onFailure,
-                                )
+                                ).onFailure(LimaeAction::reportError)
                         }
                     }
                 }

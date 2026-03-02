@@ -56,11 +56,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,7 +77,10 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
+fun HomeScreen(
+    takeAction: (LimaeAction) -> Unit,
+    FABHeight: (Dp) -> Unit,
+) {
     val topAppBarScrollBehaviour = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val homeScreenVM: HomeScreenVM = koinViewModel()
 
@@ -110,6 +116,8 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
             },
         )
 
+    val localDensity = LocalDensity.current
+
     Scaffold(topBar = {
         LargeTopAppBar(title = {
             Text(
@@ -123,7 +131,11 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
         Row(
             modifier =
                 Modifier
-                    .clip(RoundedCornerShape(50.dp))
+                    .onGloballyPositioned {
+                        with(localDensity) {
+                            FABHeight(it.size.height.toDp())
+                        }
+                    }.clip(RoundedCornerShape(50.dp))
                     .background(
                         FloatingActionButtonDefaults.containerColor,
                     ).padding(10.dp),
@@ -395,7 +407,7 @@ fun HomeScreen(takeAction: (LimaeAction) -> Unit) {
         }
     }
 
-    if (!isReadTextFieldAccessibilityServiceRunning) {
+    if (false && !isReadTextFieldAccessibilityServiceRunning) {
         ModalBottomSheet(
             onDismissRequest = {},
             sheetState = accessibilityServiceNoticeBtmSheet,

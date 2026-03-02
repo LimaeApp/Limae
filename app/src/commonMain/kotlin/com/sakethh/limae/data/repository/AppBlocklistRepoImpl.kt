@@ -5,6 +5,7 @@ import app.cash.sqldelight.coroutines.mapToList
 import com.sakethh.limae.AppBlocklist
 import com.sakethh.limae.AppBlocklistQueries
 import com.sakethh.limae.domain.LimaeDispatchers
+import com.sakethh.limae.domain.Result
 import com.sakethh.limae.domain.repository.AppBlocklistRepo
 import com.sakethh.limae.utils.getRandomUUIDv7
 import com.sakethh.limae.utils.runSafe
@@ -15,7 +16,7 @@ class AppBlocklistRepoImpl(
     private val appBlocklistQueries: AppBlocklistQueries,
     private val limaeDispatchers: LimaeDispatchers,
 ) : AppBlocklistRepo {
-    override suspend fun blockAnApp(packageName: String) {
+    override suspend fun blockAnApp(packageName: String): Result<Unit> =
         runSafe {
             withContext(limaeDispatchers.IO) {
                 appBlocklistQueries.blockAnApp(
@@ -24,9 +25,8 @@ class AppBlocklistRepoImpl(
                 )
             }
         }
-    }
 
-    override suspend fun unblockAnApp(packageName: String) {
+    override suspend fun unblockAnApp(packageName: String): Result<Unit> =
         runSafe {
             withContext(limaeDispatchers.IO) {
                 appBlocklistQueries.unblockAnApp(
@@ -34,7 +34,6 @@ class AppBlocklistRepoImpl(
                 )
             }
         }
-    }
 
     override fun getAllBlockedApps(): Flow<List<AppBlocklist>> =
         appBlocklistQueries.getAllBlockedApps().asFlow().mapToList(limaeDispatchers.IO)

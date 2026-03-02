@@ -6,15 +6,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.sakethh.limae.domain.repository.PreferencesRepo
 import com.sakethh.limae.platform.Platform
+import com.sakethh.limae.platform.platform
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.reflect.KMutableProperty0
 
 object LimaePreferences : KoinComponent {
-    var useDarkTheme by mutableStateOf(true)
-    var useSystemTheme by mutableStateOf(false)
+    private val onAndroid =
+        platform.type == Platform.Type.AndroidTablet ||
+            platform.type == Platform.Type.AndroidMobile
+
+    var useDarkTheme by mutableStateOf(
+        !(onAndroid),
+    )
+
+    var useSystemTheme by mutableStateOf(onAndroid)
+
     var useAmoledTheme by mutableStateOf(false)
-    var useDynamicTheming by mutableStateOf(false)
+
+    var useDynamicTheming by mutableStateOf(
+        onAndroid && platform.version?.run {
+            this >= 31
+        } != null,
+    )
 
     var autoSaveNotes by mutableStateOf(true)
     var useAutoExports by mutableStateOf(false)

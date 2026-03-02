@@ -12,6 +12,7 @@ import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.isReadTextFieldAccessibilityServiceRunning
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.ItemState
+import com.sakethh.limae.utils.LimaePreferences
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -20,10 +21,13 @@ import kotlinx.coroutines.launch
 
 class HomeScreenVM(
     private val notesRepo: NotesRepo,
+    private val platformPreferences: Platform.Preferences,
     private val platformActions: Platform.Actions,
 ) : ViewModel() {
     var searchQuery by mutableStateOf("")
         private set
+
+    var blockAccessibilityPopup by mutableStateOf(true)
 
     val savedNotes =
         notesRepo
@@ -90,6 +94,18 @@ class HomeScreenVM(
             is HomeScreenAction.OpenAccessibilityServiceScreen -> {
                 platformActions.openAccessibilitySettings()
             }
+
+            is HomeScreenAction.BlockEnableAccessibilityPopup -> {
+                viewModelScope.launch {
+                    platformPreferences.writePreferenceValue(
+                        preferenceKey =
+                            Platform.Preferences.Key.BooleanPreferencesKey(
+                                LimaePreferences.Key.BLOCK_ENABLE_ACCESSIBILITY_POPUP.name,
+                            ),
+                        newValue = true,
+                    )
+                }
+            }
         }
     }
 
@@ -103,5 +119,17 @@ class HomeScreenVM(
             }.invokeOnCompletion {
                 onCompletion()
             }
+    }
+
+    init {
+        viewModelScope.launch {
+            blockAccessibilityPopup =
+                platformPreferences.getPreferenceValue(
+                    preferenceKey =
+                        Platform.Preferences.Key.BooleanPreferencesKey(
+                            LimaePreferences.Key.BLOCK_ENABLE_ACCESSIBILITY_POPUP.name,
+                        ),
+                ) == true
+        }
     }
 }

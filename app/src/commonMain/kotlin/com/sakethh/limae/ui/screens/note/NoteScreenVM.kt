@@ -1,5 +1,6 @@
 package com.sakethh.limae.ui.screens.note
 
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -23,23 +24,23 @@ import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.common.KeyEventTunnel
 import com.sakethh.limae.utils.LimaePreferences
 import com.sakethh.limae.utils.onFailure
-import com.sakethh.limae.utils.onLoading
 import com.sakethh.limae.utils.onSuccess
 import com.sakethh.limae.utils.runSafe
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @OptIn(ExperimentalAtomicApi::class)
@@ -47,7 +48,7 @@ class NoteScreenVM(
     private val suggestionsRepo: SuggestionsRepo,
     private val sourceNoteId: String?,
     private val notesRepo: NotesRepo,
-    registerListeningToSuggestions: Boolean,
+    registerListeningToSuggestions: State<Boolean>,
 ) : ViewModel() {
     var note by mutableStateOf(
         Note(
@@ -59,7 +60,6 @@ class NoteScreenVM(
     )
         private set
 
-    private var grammarCheckJob: Job? = null
     private val _suggestions =
         MutableStateFlow(
             ItemState<PersistentList<LimaeSuggestionBundle>>(
@@ -71,13 +71,16 @@ class NoteScreenVM(
         )
     val suggestions = _suggestions.asStateFlow()
 
-    private val isEmittedFromTitle = AtomicBoolean(true)
     private var lastInsertedId: String? = null
 
     // a boolean would have been enough
     private val pauseSuggestions = Mutex(locked = false)
 
     var isSavingANote by mutableStateOf(false)
+
+    private var currentActiveTextField by mutableStateOf(
+        ActiveTextField.None,
+    )
 
     private fun getSuggestionValue(
         suggestion: String,
@@ -92,7 +95,7 @@ class NoteScreenVM(
             suggestion
         }
 
-    private fun applySuggestionToNote(
+    private suspend fun applySuggestionToNote(
         replacementText: String,
         engine: SuggestionEngine,
         startIndex: Int,
@@ -107,39 +110,43 @@ class NoteScreenVM(
             }
 
         runSafe {
-            if (isEmittedFromTitle.load()) {
-                note =
-                    note.run {
-                        copy(
-                            title =
-                                title.replaceRange(
-                                    startIndex = startIndex,
-                                    endIndex = endIndex,
-                                    replacement = replacementText,
-                                ),
-                        )
+            note =
+                note.run {
+                    when (currentActiveTextField) {
+                        ActiveTextField.Title -> {
+                            copy(
+                                title =
+                                    title.replaceRange(
+                                        startIndex = startIndex,
+                                        endIndex = endIndex,
+                                        replacement = replacementText,
+                                    ),
+                            )
+                        }
+
+                        ActiveTextField.Content -> {
+                            copy(
+                                content =
+                                    content.replaceRange(
+                                        startIndex = startIndex,
+                                        endIndex = endIndex,
+                                        replacement = replacementText,
+                                    ),
+                            )
+                        }
+
+                        else -> {
+                            error("One of the text field (${ActiveTextField.entries}) is supposed to be active.")
+                        }
                     }
-            } else {
-                note =
-                    note.run {
-                        copy(
-                            content =
-                                content.replaceRange(
-                                    startIndex = startIndex,
-                                    endIndex = endIndex,
-                                    replacement = replacementText,
-                                ),
-                        )
-                    }
-            }
-        }
+                }
+        }.onFailure(LimaeAction::reportError)
     }
 
     fun onAction(noteScreenAction: NoteScreenAction) {
         when (noteScreenAction) {
             is NoteScreenAction.OnContentChange -> {
-                note =
-                    note.copy(content = noteScreenAction.newContent)
+                note = note.copy(content = noteScreenAction.newContent)
             }
 
             is NoteScreenAction.OnTitleChange -> {
@@ -148,12 +155,14 @@ class NoteScreenVM(
 
             is NoteScreenAction.OnSuggestionAccept -> {
                 val limaeSuggestionBundle = suggestions.value.data[noteScreenAction.limaeNotesIndex]
-                applySuggestionToNote(
-                    replacementText = limaeSuggestionBundle.suggestion.suggestions[noteScreenAction.suggestionNoteIndex],
-                    engine = limaeSuggestionBundle.engine,
-                    startIndex = limaeSuggestionBundle.suggestion.startIndex,
-                    endIndex = limaeSuggestionBundle.suggestion.endIndex,
-                )
+                viewModelScope.launch {
+                    applySuggestionToNote(
+                        replacementText = limaeSuggestionBundle.suggestion.suggestions[noteScreenAction.suggestionNoteIndex],
+                        engine = limaeSuggestionBundle.engine,
+                        startIndex = limaeSuggestionBundle.suggestion.startIndex,
+                        endIndex = limaeSuggestionBundle.suggestion.endIndex,
+                    )
+                }
             }
 
             is NoteScreenAction.SaveNote -> {
@@ -185,6 +194,10 @@ class NoteScreenVM(
                             LimaeAction::reportError,
                         )
                 }
+            }
+
+            is NoteScreenAction.UpdateFocusedTextField -> {
+                currentActiveTextField = noteScreenAction.field
             }
         }
     }
@@ -229,7 +242,7 @@ class NoteScreenVM(
     }
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             if (sourceNoteId != null) {
                 notesRepo
                     .getANoteById(sourceNoteId)
@@ -250,50 +263,42 @@ class NoteScreenVM(
                 }
             }
         }
-        if (registerListeningToSuggestions) {
-            grammarCheckJob =
-                viewModelScope.launch(Dispatchers.Default) {
-                    launch {
+
+        viewModelScope.launch {
+            snapshotFlow {
+                registerListeningToSuggestions.value
+            }.flatMapLatest { listenToSuggestions ->
+                if (listenToSuggestions) {
+                    combine(
                         snapshotFlow {
-                            note.title
-                        }.transform {
-                            if (!pauseSuggestions.isLocked) {
-                                emit(it)
-                            }
-                        }.collectLatest { rawString ->
-                            isEmittedFromTitle.store(true)
-                            _suggestions.onLoading()
-                            suggestionsRepo
-                                .getSuggestions(rawString)
-                                .onSuccess { (suggestionBundles) ->
-                                    _suggestions.onSuccess(suggestionBundles)
-                                }.onFailure(
-                                    _suggestions::onFailure,
-                                ).onFailure(LimaeAction::reportError)
-                        }
-                    }
-                    launch {
+                            currentActiveTextField
+                        },
                         snapshotFlow {
-                            note.content
-                        }.transform {
-                            if (!pauseSuggestions.isLocked) {
-                                emit(it)
+                            note
+                        },
+                    ) { currentActiveTextField, note ->
+                        currentActiveTextField to note
+                    }.transform { (currentActiveTextField, note) ->
+                        if (!pauseSuggestions.isLocked) {
+                            when (currentActiveTextField) {
+                                ActiveTextField.Title -> emit(note.title)
+                                else -> emit(note.content)
                             }
-                        }.collectLatest { rawString ->
-                            isEmittedFromTitle.store(false)
-                            _suggestions.onLoading()
-                            suggestionsRepo
-                                .getSuggestions(rawString)
-                                .onSuccess { (suggestionBundles) ->
-                                    _suggestions.onSuccess(suggestionBundles)
-                                }.onFailure(
-                                    _suggestions::onFailure,
-                                ).onFailure(LimaeAction::reportError)
                         }
+                    }.flatMapLatest { rawString ->
+                        suggestionsRepo.getSuggestions(rawString)
                     }
+                } else {
+                    emptyFlow()
                 }
-        } else {
-            grammarCheckJob?.cancel() // there will be no Job when it reaches here. but aight.
+            }.collectLatest { suggestionsResult ->
+                suggestionsResult
+                    .onSuccess { (suggestionBundles) ->
+                        _suggestions.onSuccess(suggestionBundles)
+                    }.onFailure(
+                        _suggestions::onFailure,
+                    ).onFailure(LimaeAction::reportError)
+            }
         }
 
         viewModelScope.launch(Dispatchers.Default) {

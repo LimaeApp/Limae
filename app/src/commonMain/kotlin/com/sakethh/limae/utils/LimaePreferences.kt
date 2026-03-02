@@ -12,20 +12,16 @@ import org.koin.core.component.inject
 import kotlin.reflect.KMutableProperty0
 
 object LimaePreferences : KoinComponent {
-    private val onAndroid =
-        platform.type == Platform.Type.AndroidTablet ||
-            platform.type == Platform.Type.AndroidMobile
-
     var useDarkTheme by mutableStateOf(
-        !(onAndroid),
+        !(Platform.onAndroid),
     )
 
-    var useSystemTheme by mutableStateOf(onAndroid)
+    var useSystemTheme by mutableStateOf(Platform.onAndroid)
 
     var useAmoledTheme by mutableStateOf(false)
 
     var useDynamicTheming by mutableStateOf(
-        onAndroid && platform.version?.run {
+        Platform.onAndroid && platform.version?.run {
             this >= 31
         } != null,
     )
@@ -47,17 +43,36 @@ object LimaePreferences : KoinComponent {
        (Key.USE_DARK_THEME.state as KMutableProperty0<Any?>).set(false)
      */
     enum class Key(
-        val state: KMutableProperty0<*>,
-        val stateType: Primitive,
+        val state: KMutableProperty0<*>?,
+        val stateType: Primitive?,
     ) {
         USE_DARK_THEME(::useDarkTheme, Primitive.Boolean),
-        USE_SYSTEM_THEME(::useSystemTheme, Primitive.Boolean),
-        USE_AMOLED_THEME(::useAmoledTheme, Primitive.Boolean),
+        USE_SYSTEM_THEME(
+            ::useSystemTheme,
+            Primitive.Boolean,
+        ),
+        USE_AMOLED_THEME(
+            ::useAmoledTheme,
+            Primitive.Boolean,
+        ),
         USE_DYNAMIC_THEME(::useDynamicTheming, Primitive.Boolean),
-        AUTO_SAVE_NOTE(::autoSaveNotes, Primitive.Boolean),
-        USE_SNAPSHOTS(::useAutoExports, Primitive.Boolean),
-        ACCESSIBILITY_ICON_SIZE(::accessibilityIconSize, Primitive.Int),
+        AUTO_SAVE_NOTE(
+            ::autoSaveNotes,
+            Primitive.Boolean,
+        ),
+        USE_SNAPSHOTS(
+            ::useAutoExports,
+            Primitive.Boolean,
+        ),
+        ACCESSIBILITY_ICON_SIZE(
+            ::accessibilityIconSize,
+            Primitive.Int,
+        ),
         EXPORT_DIR_PATH(::exportDirPath, Primitive.String),
+        BLOCK_ENABLE_ACCESSIBILITY_POPUP(
+            null,
+            null,
+        ),
     }
 
     private val preferencesRepo by inject<PreferencesRepo>()
@@ -68,6 +83,8 @@ object LimaePreferences : KoinComponent {
 
         val preferences = preferencesRepo.getAllPreferences()
         Key.entries.forEach { preference ->
+            if (preference.stateType == null || preference.state == null) return@forEach
+
             val preferenceKey =
                 when (preference.stateType) {
                     Primitive.Int -> Platform.Preferences.Key.IntPreferencesKey(preference.name)

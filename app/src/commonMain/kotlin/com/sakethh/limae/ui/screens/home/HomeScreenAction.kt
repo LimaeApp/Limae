@@ -11,4 +11,6 @@ sealed interface HomeScreenAction {
     ) : HomeScreenAction
 
     data object OpenAccessibilityServiceScreen : HomeScreenAction
+
+    data object BlockEnableAccessibilityPopup : HomeScreenAction
 }

@@ -17,8 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateSetOf
-import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -43,10 +41,6 @@ fun SuggestionsList(
     onSuggestionAccept: (LimaeNotesIndex, SuggestionNoteIndex) -> Unit,
     onAcceptAll: () -> Unit,
 ) {
-    val dictStringsLookup =
-        retain {
-            mutableStateSetOf<String>()
-        }
     LazyColumn(modifier = modifier) {
         if (showStickyHeader) {
             stickyHeader {
@@ -106,12 +100,10 @@ fun SuggestionsList(
         itemsIndexed(suggestions, key = { _, suggestion ->
             "Suggestion-${suggestion.suggestion.refId}"
         }) { index, suggestion ->
-            if (dictStringsLookup.contains(suggestion.suggestion.errorSequence)) return@itemsIndexed
             SuggestionNote(
                 limaeSuggestionBundle = suggestion,
                 onAddToDictionary = {
                     onAddToDictionary(suggestion)
-                    dictStringsLookup.add(suggestion.suggestion.errorSequence)
                 },
                 onSuggestionAccept = {
                     onSuggestionAccept(index, it)

@@ -68,4 +68,10 @@ interface Platform {
             ) : Key<String>
         }
     }
+
+    companion object {
+        val onAndroid =
+            platform.type == Type.AndroidTablet ||
+                platform.type == Type.AndroidMobile
+    }
 }

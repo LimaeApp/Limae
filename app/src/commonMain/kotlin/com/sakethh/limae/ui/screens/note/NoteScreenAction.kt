@@ -26,4 +26,8 @@ sealed interface NoteScreenAction {
     data class AddStringToDictionary(
         val string: String,
     ) : NoteScreenAction
+
+    data class UpdateFocusedTextField(
+        val field: ActiveTextField,
+    ) : NoteScreenAction
 }

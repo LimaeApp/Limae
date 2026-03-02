@@ -1,4 +1,4 @@
-package com.sakethh.limae
+package com.sakethh.limae.ui.common
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
@@ -40,6 +40,7 @@ import kotlinx.collections.immutable.persistentListOf
 fun AccessibilitySuggestionsSheet(
     foregroundApp: Platform.Actions.InstalledApp?,
     onDismissRequest: () -> Unit,
+    forNotesScreen: Boolean = false,
     onBlockRequest: () -> Unit,
     suggestions: PersistentList<LimaeSuggestionBundle>,
     onAddToDictionary: (LimaeSuggestionBundle) -> Unit,
@@ -63,8 +64,11 @@ fun AccessibilitySuggestionsSheet(
                 Row(
                     modifier =
                         Modifier
-                            .padding(start = 10.dp, end = 10.dp, top = 10.dp)
-                            .fillMaxWidth(),
+                            .padding(
+                                start = 10.dp,
+                                end = 10.dp,
+                                top = if (!forNotesScreen) 10.dp else 0.dp,
+                            ).fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
@@ -89,18 +93,20 @@ fun AccessibilitySuggestionsSheet(
                         }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = onBlockRequest) {
-                            Icon(
-                                imageVector = Icons.Block,
-                                contentDescription = "Block Limae's processing when using the app that's currently being used.",
-                            )
+                        if (!forNotesScreen) {
+                            TextButton(onClick = onBlockRequest) {
+                                Icon(
+                                    imageVector = Icons.Block,
+                                    contentDescription = "Block Limae's processing when using the app that's currently being used.",
+                                )
+                                Spacer(Modifier.width(5.dp))
+                                Text(
+                                    text = "Block",
+                                    style = MaterialTheme.typography.titleSmall,
+                                )
+                            }
                             Spacer(Modifier.width(5.dp))
-                            Text(
-                                text = "Block",
-                                style = MaterialTheme.typography.titleSmall,
-                            )
                         }
-                        Spacer(Modifier.width(5.dp))
                         ElevatedButton(onClick = onDismissRequest) {
                             Icon(
                                 imageVector = Icons.Close,
@@ -138,6 +144,6 @@ fun AccessibilitySuggestionsSheet(
 @Preview
 private fun AccessibilitySuggestionsSheetPreview() {
     LimaeTheme {
-        AccessibilitySuggestionsSheet(null, {}, {}, persistentListOf(), {}, { _, _ -> })
+        AccessibilitySuggestionsSheet(null, {}, true, {}, persistentListOf(), {}, { _, _ -> })
     }
 }

@@ -22,6 +22,7 @@ import com.sakethh.limae.utils.Constants
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import okio.Path.Companion.toPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.compose.getKoin
@@ -88,5 +89,5 @@ actual fun dynamicDarkTheme(): ColorScheme =
         darkColorScheme()
     }
 
-actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> =
+actual val isReadTextFieldAccessibilityServiceRunning: StateFlow<Boolean> =
     ReadTextFieldAccessibilityService.connected

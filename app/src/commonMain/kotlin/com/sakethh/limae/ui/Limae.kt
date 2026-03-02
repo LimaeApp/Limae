@@ -133,7 +133,14 @@ fun Limae() {
             }
         NavHost(
             navController = navController,
-            startDestination = if (platform.type == Platform.Type.Web) NavRoute.Note(noteId = null) else NavRoute.Home,
+            startDestination =
+                if (platform.type ==
+                    Platform.Type.Web
+                ) {
+                    NavRoute.Note(noteId = null, showAccessibilityOverlay = false)
+                } else {
+                    NavRoute.Home
+                },
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
         ) {
@@ -207,6 +214,7 @@ fun Limae() {
             ) { navBackStackEntry ->
                 val note = navBackStackEntry.toRoute<NavRoute.Note>()
                 NoteScreen(
+                    showAccessibilityOverlay = note.showAccessibilityOverlay,
                     takeAction = {
                         takeAction(it)
                     },

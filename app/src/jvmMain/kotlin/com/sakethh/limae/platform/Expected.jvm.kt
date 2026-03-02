@@ -19,6 +19,8 @@ import com.sakethh.limae.utils.Constants
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
@@ -89,4 +91,4 @@ actual fun dynamicLightTheme(): ColorScheme = lightColorScheme()
 @Composable
 actual fun dynamicDarkTheme(): ColorScheme = darkColorScheme()
 
-actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> = flowOf(true)
+actual val isReadTextFieldAccessibilityServiceRunning: StateFlow<Boolean> = MutableStateFlow(true)

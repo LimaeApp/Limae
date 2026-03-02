@@ -29,6 +29,7 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -37,6 +38,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
@@ -47,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -67,12 +70,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.ui.Icons
 import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.showHandOnHover
 import com.sakethh.limae.ui.navigation.NavRoute
 import com.sakethh.limae.utils.epochToReadableDateTime
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,11 +109,19 @@ fun HomeScreen(
         }
     }
 
+    var showAccessibilityBtmSheet by rememberSaveable {
+        mutableStateOf(Platform.onAndroid)
+    }
+
+    var checkForAccessibilityService by rememberSaveable {
+        mutableStateOf(true)
+    } // we don't care about "this state" for recompositions, but just to retain the value across config changes (VM is a better option)
+
     val accessibilityServiceNoticeBtmSheet =
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
             confirmValueChange = { sheetValue ->
-                if (sheetValue == SheetValue.Hidden) {
+                if (checkForAccessibilityService && sheetValue == SheetValue.Hidden) {
                     isReadTextFieldAccessibilityServiceRunning
                 } else {
                     true
@@ -117,6 +130,8 @@ fun HomeScreen(
         )
 
     val localDensity = LocalDensity.current
+    val showAccessibilityOverlay =
+        !checkForAccessibilityService || !isReadTextFieldAccessibilityServiceRunning
 
     Scaffold(topBar = {
         LargeTopAppBar(title = {
@@ -201,7 +216,15 @@ fun HomeScreen(
                 )
             }
             FilledIconButton(modifier = Modifier.showHandOnHover(), onClick = {
-                takeAction(LimaeAction.Navigate(destination = NavRoute.Note(noteId = null)))
+                takeAction(
+                    LimaeAction.Navigate(
+                        destination =
+                            NavRoute.Note(
+                                noteId = null,
+                                showAccessibilityOverlay = showAccessibilityOverlay,
+                            ),
+                    ),
+                )
             }) {
                 Icon(
                     imageVector = Icons.AddNotes,
@@ -288,6 +311,8 @@ fun HomeScreen(
                                                                         LimaeAction.Navigate(
                                                                             NavRoute.Note(
                                                                                 noteId = null,
+                                                                                showAccessibilityOverlay =
+                                                                                showAccessibilityOverlay,
                                                                             ),
                                                                         ),
                                                                     )
@@ -332,6 +357,7 @@ fun HomeScreen(
                                         destination =
                                             NavRoute.Note(
                                                 noteId = note.id,
+                                                showAccessibilityOverlay = showAccessibilityOverlay,
                                             ),
                                     ),
                                 )
@@ -406,8 +432,8 @@ fun HomeScreen(
             }
         }
     }
-
-    if (false && !isReadTextFieldAccessibilityServiceRunning) {
+    val coroutineScope = rememberCoroutineScope()
+    if (!homeScreenVM.blockAccessibilityPopup && showAccessibilityBtmSheet && !isReadTextFieldAccessibilityServiceRunning) {
         ModalBottomSheet(
             onDismissRequest = {},
             sheetState = accessibilityServiceNoticeBtmSheet,
@@ -420,27 +446,62 @@ fun HomeScreen(
                         .navigationBarsPadding(),
             ) {
                 Text(
-                    text = "Accessibility Permission Required",
+                    text = "Enable Accessibility Access",
                     style = MaterialTheme.typography.titleLarge,
                     fontSize = 24.sp,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.height(5.dp))
                 Text(
-                    text = "Limae requires the accessibility permission to work.\nEverything is processed locally, your drafts and any other information remains on your device.",
+                    text = "To work across all your apps, Limae needs accessibility access.\nYour data never leaves your device.",
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.secondary,
                 )
                 Spacer(Modifier.height(15.dp))
                 Text(
-                    text = "1. Tap \"Open Accessibility Settings\"\n2. Go to \"Downloaded Apps\"\n3. Select \"Limae\"\n4. Enable the \"Limae\" toggle\n5. Grant \"Full control of your device\"\n   when prompted",
+                    text = "1. Tap \"Open Accessibility Settings\"\n2. Go to \"Downloaded Apps\"\n3. Select \"Limae\"\n4. Enable the \"Limae\" toggle to \"on\"\n5. Grant \"Full control of your device\" when asked",
                     style = MaterialTheme.typography.titleSmall,
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.secondary.copy(0.75f),
                 )
-                Button(
+                OutlinedButton(
                     modifier = Modifier.showHandOnHover().fillMaxWidth().padding(top = 15.dp),
+                    onClick = {
+                        checkForAccessibilityService = false
+                        homeScreenVM.performAction(HomeScreenAction.BlockEnableAccessibilityPopup)
+                        coroutineScope
+                            .launch {
+                                accessibilityServiceNoticeBtmSheet.hide()
+                            }.invokeOnCompletion {
+                                showAccessibilityBtmSheet = false
+                            }
+                    },
+                ) {
+                    Text(
+                        text = "Never remind me",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+                FilledTonalButton(
+                    modifier = Modifier.showHandOnHover().fillMaxWidth(),
+                    onClick = {
+                        checkForAccessibilityService = false
+                        coroutineScope
+                            .launch {
+                                accessibilityServiceNoticeBtmSheet.hide()
+                            }.invokeOnCompletion {
+                                showAccessibilityBtmSheet = false
+                            }
+                    },
+                ) {
+                    Text(
+                        text = "Skip for now",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+                Button(
+                    modifier = Modifier.showHandOnHover().fillMaxWidth(),
                     onClick = {
                         homeScreenVM.performAction(HomeScreenAction.OpenAccessibilityServiceScreen)
                     },

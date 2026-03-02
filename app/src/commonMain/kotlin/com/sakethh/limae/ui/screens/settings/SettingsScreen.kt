@@ -193,6 +193,8 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
         )
     }
 
+    val exportedPathComponentSpace = if (isExportPathPicked) 15.dp else 0.dp
+
     Scaffold(topBar = {
         LargeTopAppBar(title = {
             Text(
@@ -646,7 +648,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         showFilledIcon = true,
                     ),
                 )
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(if (isExportPathPicked) 22.dp else 18.dp))
             }
             item {
                 AnimatedVisibility(!onAndroid && isExportPathPicked) {
@@ -673,39 +675,55 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                                     },
                                 ),
                     ) {
-                        Spacer(modifier = Modifier.height(15.dp))
-                        exportComponent()
-                        Column(Modifier.padding(15.dp)) {
-                            Text(
-                                text = "Current export path",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.secondary,
-                            )
-                            Spacer(Modifier.height(2.5.dp))
-                            Text(
-                                text = LimaePreferences.exportDirPath,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.secondary,
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            FilledTonalButton(
-                                onClick = {
-                                    settingsScreenVM.performAction(SettingsScreenAction.PickADirectory)
-                                },
-                                modifier =
-                                    Modifier
-                                        .showHandOnHover()
-                                        .fillMaxWidth(),
-                            ) {
-                                Text(
-                                    text = "Choose an export location",
-                                    style = MaterialTheme.typography.titleSmall,
-                                )
+                        AnimatedVisibility(isExportPathPicked) {
+                            Column {
+                                Spacer(modifier = Modifier.height(15.dp))
+                                exportComponent()
+
+                                Column(
+                                    modifier =
+                                        Modifier.padding(
+                                            start = 15.dp,
+                                            end = 15.dp,
+                                            top = 15.dp,
+                                        ),
+                                ) {
+                                    Text(
+                                        text = "Current export path",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                    )
+                                    Spacer(Modifier.height(2.5.dp))
+                                    Text(
+                                        text = LimaePreferences.exportDirPath,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
                             }
+                        }
+                        FilledTonalButton(
+                            onClick = {
+                                settingsScreenVM.performAction(SettingsScreenAction.PickADirectory)
+                            },
+                            modifier =
+                                Modifier
+                                    .showHandOnHover()
+                                    .padding(
+                                        start = exportedPathComponentSpace,
+                                        end = exportedPathComponentSpace,
+                                        bottom = exportedPathComponentSpace,
+                                    ).fillMaxWidth(),
+                        ) {
+                            Text(
+                                text = "Choose an export location",
+                                style = MaterialTheme.typography.titleSmall,
+                            )
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(if (!isExportPathPicked) 22.dp else 18.dp))
+                Spacer(modifier = Modifier.height(18.dp))
             }
             item {
                 SettingComponent(

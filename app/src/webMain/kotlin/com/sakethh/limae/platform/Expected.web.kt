@@ -17,6 +17,8 @@ import com.sakethh.limae.domain.LanguageToolEngineRepo
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.json.Json
 import org.koin.core.module.Module
@@ -126,4 +128,4 @@ actual fun dynamicLightTheme(): ColorScheme = lightColorScheme()
 @Composable
 actual fun dynamicDarkTheme(): ColorScheme = darkColorScheme()
 
-actual val isReadTextFieldAccessibilityServiceRunning: Flow<Boolean> = flowOf(true)
+actual val isReadTextFieldAccessibilityServiceRunning: StateFlow<Boolean> = MutableStateFlow(true)

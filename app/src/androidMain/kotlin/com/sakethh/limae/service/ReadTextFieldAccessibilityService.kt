@@ -27,7 +27,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.sakethh.limae.AccessibilitySuggestionsSheet
 import com.sakethh.limae.OverlayLifecycleOwner
 import com.sakethh.limae.R
 import com.sakethh.limae.domain.SuggestionEngine
@@ -37,6 +36,7 @@ import com.sakethh.limae.domain.onSuccess
 import com.sakethh.limae.domain.repository.AppBlocklistRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.platform.Platform
+import com.sakethh.limae.ui.common.AccessibilitySuggestionsSheet
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.theme.LimaeTheme
 import com.sakethh.limae.utils.LimaePreferences
@@ -177,12 +177,16 @@ class ReadTextFieldAccessibilityService : AccessibilityService() {
                         emit(it)
                     }
                 }.debounce(250)
-                    .collectLatest { inputText ->
+                    .flatMapLatest { inputText ->
                         suggestionsRepo
                             .getSuggestions(inputText)
+                    }.collectLatest { suggestionsResult ->
+                        suggestionsResult
                             .onSuccess { (suggestions) ->
-                                suggestionsResult.onSuccess(suggestions)
-                            }.onFailure(suggestionsResult::onFailure)
+                                this@ReadTextFieldAccessibilityService.suggestionsResult.onSuccess(
+                                    suggestions,
+                                )
+                            }.onFailure(this@ReadTextFieldAccessibilityService.suggestionsResult::onFailure)
                     }
             }
         }

@@ -7,7 +7,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
 
 interface SuggestionsRepo {
-    suspend fun getSuggestions(text: String): Result<PersistentList<LimaeSuggestionBundle>>
+    suspend fun getSuggestions(text: String): Flow<Result<PersistentList<LimaeSuggestionBundle>>>
 
     suspend fun addStringsToDictionary(customStrings: List<String>): Result<Unit>
 

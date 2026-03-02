@@ -5,11 +5,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface NavRoute {
     @Serializable
-    data object Home: NavRoute
+    data object Home : NavRoute
 
     @Serializable
-    data object Settings: NavRoute
+    data object Settings : NavRoute
 
     @Serializable
-    data class Note(val noteId: String?): NavRoute
+    data class Note(
+        val noteId: String?,
+        val showAccessibilityOverlay: Boolean,
+    ) : NavRoute
 }

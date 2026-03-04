@@ -90,7 +90,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import limae.app.generated.resources.Res
-import limae.app.generated.resources.secretary_bird
+import limae.app.generated.resources.secretary_bird_webp
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -886,7 +886,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                painter = painterResource(Res.drawable.secretary_bird),
+                painter = painterResource(Res.drawable.secretary_bird_webp),
                 contentDescription = null,
                 modifier =
                     Modifier

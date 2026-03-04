@@ -73,6 +73,7 @@ object LimaePreferences : KoinComponent {
             null,
             null,
         ),
+        SHOW_ONBOARDING(null, null),
     }
 
     private val preferencesRepo by inject<PreferencesRepo>()

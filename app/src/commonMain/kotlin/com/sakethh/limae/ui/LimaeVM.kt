@@ -1,6 +1,9 @@
 package com.sakethh.limae.ui
 
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,9 +14,12 @@ import com.sakethh.limae.domain.repository.AppBlocklistRepo
 import com.sakethh.limae.domain.repository.NotesRepo
 import com.sakethh.limae.domain.repository.SuggestionsRepo
 import com.sakethh.limae.platform.Platform
+import com.sakethh.limae.platform.runBlockingNonWeb
 import com.sakethh.limae.utils.LimaeJson
 import com.sakethh.limae.utils.LimaePreferences
+import com.sakethh.limae.utils.NonWebRunBlocking
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
@@ -25,13 +31,25 @@ class LimaeVM(
     private val suggestionsRepo: SuggestionsRepo,
     private val appBlocklistRepo: AppBlocklistRepo,
     private val platformActions: Platform.Actions,
+    private val platformPreferences: Platform.Preferences,
 ) : ViewModel() {
     val snackBarHost = SnackbarHostState()
 
+    var showOnboarding by mutableStateOf(false)
+        private set
+
     init {
+
+        @OptIn(NonWebRunBlocking::class)
+        runBlockingNonWeb {
+            showOnboarding = platformPreferences.getPreferenceValue(
+                preferenceKey = Platform.Preferences.Key.BooleanPreferencesKey(LimaePreferences.Key.SHOW_ONBOARDING.name),
+            ) == null
+        }
+
         viewModelScope.launch(Dispatchers.Default) {
             launch {
-                LimaeAction.readEvents.collect { limaeAction ->
+                LimaeAction.readEvents.collectLatest { limaeAction ->
                     when (limaeAction) {
                         is LimaeAction.Navigate -> Unit
                         LimaeAction.NavigateBack -> Unit
@@ -85,6 +103,15 @@ class LimaeVM(
                             ).onFailure(LimaeAction::reportError)
                     }
             }
+        }
+    }
+
+    fun markOnboardingDone() {
+        viewModelScope.launch {
+            platformPreferences.writePreferenceValue(
+                preferenceKey = Platform.Preferences.Key.BooleanPreferencesKey(LimaePreferences.Key.SHOW_ONBOARDING.name),
+                newValue = true,
+            )
         }
     }
 }

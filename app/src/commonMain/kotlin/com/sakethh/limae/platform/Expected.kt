@@ -5,8 +5,8 @@ import androidx.compose.runtime.Composable
 import com.sakethh.limae.domain.EngineSuggestion
 import com.sakethh.limae.domain.HarperEngineRepo
 import com.sakethh.limae.domain.LanguageToolEngineRepo
+import com.sakethh.limae.utils.NonWebRunBlocking
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.core.module.Module
 
@@ -31,3 +31,15 @@ expect fun dynamicLightTheme(): ColorScheme
 expect fun dynamicDarkTheme(): ColorScheme
 
 expect val isReadTextFieldAccessibilityServiceRunning: StateFlow<Boolean>
+
+@NonWebRunBlocking
+/**
+`runBlockingNonWeb` works as expected on Android and Desktop, but the
+native implementation is unavailable on Web via Wasm, so this fallback
+essentially does absolutely nothing there. AVOID USING THIS UNLESS IT
+DOES NOT IMPACT WEB USAGE, because a proper solution matching standard
+behavior won't likely arrive anytime soon.
+ * */
+expect inline fun runBlockingNonWeb(
+    crossinline block: suspend () -> Unit,
+)

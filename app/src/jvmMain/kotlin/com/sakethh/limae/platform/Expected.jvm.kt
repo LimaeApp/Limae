@@ -4,9 +4,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.sakethh.limae.HarperJVMEngine
@@ -18,12 +15,10 @@ import com.sakethh.limae.domain.LintKind
 import com.sakethh.limae.utils.Constants
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
-import okio.Path.Companion.toPath
 import org.koin.core.module.Module
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -92,3 +87,9 @@ actual fun dynamicLightTheme(): ColorScheme = lightColorScheme()
 actual fun dynamicDarkTheme(): ColorScheme = darkColorScheme()
 
 actual val isReadTextFieldAccessibilityServiceRunning: StateFlow<Boolean> = MutableStateFlow(true)
+
+actual inline fun runBlockingNonWeb(crossinline block: suspend () -> Unit) {
+    runBlocking {
+        block()
+    }
+}

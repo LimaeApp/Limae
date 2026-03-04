@@ -83,7 +83,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import limae.app.generated.resources.Res
-import limae.app.generated.resources.secretary_bird
+import limae.app.generated.resources.secretary_bird_webp
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.getKoin
 import kotlin.math.roundToInt
@@ -245,7 +245,7 @@ fun NoteScreen(
                     },
         ) {
             Image(
-                painter = painterResource(Res.drawable.secretary_bird),
+                painter = painterResource(Res.drawable.secretary_bird_webp),
                 contentDescription = "Expands the Limae Interface",
             )
         }

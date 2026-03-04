@@ -48,6 +48,7 @@ import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.navigation.NavRoute
 import com.sakethh.limae.ui.screens.home.HomeScreen
 import com.sakethh.limae.ui.screens.note.NoteScreen
+import com.sakethh.limae.ui.screens.onboarding.OnboardingScreen
 import com.sakethh.limae.ui.screens.settings.SettingsScreen
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -134,7 +135,9 @@ fun Limae() {
         NavHost(
             navController = navController,
             startDestination =
-                if (platform.type ==
+                if (limaeVM.showOnboarding) {
+                    NavRoute.Onboarding
+                } else if (platform.type ==
                     Platform.Type.Web
                 ) {
                     NavRoute.Note(noteId = null, showAccessibilityOverlay = false)
@@ -144,6 +147,18 @@ fun Limae() {
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
         ) {
+            composable<NavRoute.Onboarding> {
+                OnboardingScreen(onOnboardingComplete = {
+                    limaeVM.markOnboardingDone()
+                    navController.navigate(NavRoute.Home) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             composable<NavRoute.Home>(
                 enterTransition = {
                     fadeIn(

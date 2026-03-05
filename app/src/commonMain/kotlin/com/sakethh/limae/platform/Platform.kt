@@ -73,5 +73,9 @@ interface Platform {
         val onAndroid =
             platform.type == Type.AndroidTablet ||
                 platform.type == Type.AndroidMobile
+        val onDesktop =
+            platform.type == Type.Desktop
+        val onWeb =
+            platform.type == Type.Web
     }
 }

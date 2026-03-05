@@ -2,11 +2,18 @@ package com.sakethh.limae.utils
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.sakethh.limae.domain.SuggestionEngine
 import com.sakethh.limae.domain.repository.PreferencesRepo
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.platform
+import com.sakethh.limae.ui.LimaeAction
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.reflect.KMutableProperty0
@@ -31,6 +38,97 @@ object LimaePreferences : KoinComponent {
 
     var accessibilityIconSize by mutableIntStateOf(45)
     var exportDirPath by mutableStateOf("")
+
+    var optedEngines =
+        mutableStateListOf<SuggestionEngine>().also {
+            if (platform.type == Platform.Type.Web || Platform.onAndroid) {
+                it.add(SuggestionEngine.Harper)
+            } else {
+                it.addAll(SuggestionEngine.entries)
+            }
+        }
+        private set
+
+    private val preferencesRepo by inject<PreferencesRepo>()
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+
+    init {
+        coroutineScope.launch {
+            optedEngines.clear()
+
+            var optedEngines =
+                preferencesRepo
+                    .getPreferenceValue(
+                        preferenceKey =
+                            Platform.Preferences.Key.StringPreferencesKey(
+                                key = Key.OPTED_ENGINES.name,
+                            ),
+                    )?.run {
+                        LimaeJson.decodeFromString<List<String>>(this)
+                    }?.map {
+                        SuggestionEngine.valueOf(it)
+                    }
+
+            if (optedEngines == null || LimaePreferences.optedEngines.isEmpty()) {
+                val enginesList = buildList {
+                    add(SuggestionEngine.Harper)
+                    if (Platform.onDesktop) {
+                        add(SuggestionEngine.LanguageTool)
+                    }
+                }
+                LimaePreferences.optedEngines.addAll(enginesList)
+                optedEngines = enginesList
+                updateOptedInEnginesOnDisk()
+            }
+
+            LimaePreferences.optedEngines.addAll(optedEngines)
+
+            launch {
+
+            }
+        }
+    }
+
+    private suspend fun updateOptedInEnginesOnDisk() {
+        preferencesRepo.writePreferenceValue(
+            preferenceKey =
+                Platform.Preferences.Key.StringPreferencesKey(
+                    key = Key.OPTED_ENGINES.name,
+                ),
+            newValue =
+                LimaeJson.encodeToString(
+                    optedEngines.map {
+                        it.name
+                    },
+                ),
+        )
+    }
+
+    private var optedEngineJob: Job? = null
+
+    fun toggleOptedEngine(suggestionEngine: SuggestionEngine) {
+        var showMinOptInSnackbar: Boolean
+        optedEngineJob?.cancel()
+
+        if (!optedEngines.contains(suggestionEngine)) {
+            optedEngines.add(suggestionEngine)
+            showMinOptInSnackbar = false
+        } else {
+            if (optedEngines.size > 1) {
+                optedEngines.remove(suggestionEngine)
+                showMinOptInSnackbar = false
+            } else {
+                showMinOptInSnackbar = true
+            }
+        }
+
+        optedEngineJob = coroutineScope.launch {
+            if (showMinOptInSnackbar) {
+                LimaeAction.reportMessage("You must opt in at least one engine.")
+            }
+            updateOptedInEnginesOnDisk()
+        }
+    }
 
     enum class Primitive {
         Int,
@@ -74,9 +172,9 @@ object LimaePreferences : KoinComponent {
             null,
         ),
         SHOW_ONBOARDING(null, null),
+        OPTED_ENGINES(null, null),
     }
 
-    private val preferencesRepo by inject<PreferencesRepo>()
     private var loadedPrefs = false
 
     suspend fun loadAll() {

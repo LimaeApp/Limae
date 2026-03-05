@@ -39,6 +39,7 @@ import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -85,6 +86,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sakethh.limae.domain.SuggestionEngine
 import com.sakethh.limae.platform.Platform
 import com.sakethh.limae.platform.platform
 import com.sakethh.limae.ui.Icons
@@ -323,6 +325,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                             Text(
                                 text = "Limae's mascot, the Secretary Bird, is an artwork by Maxime Budar.",
                                 style = MaterialTheme.typography.titleSmall,
+                                fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.secondary,
                             )
                         }
@@ -538,7 +541,50 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                         showIcon = false,
                     ),
                 )
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+            item {
+                Text(
+                    text = "Engines",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(start = 15.dp),
+                )
+                Spacer(Modifier.height(2.5.dp))
+                Text(
+                    text = "The selected engines will be used for suggestions. At least one must be opted in.",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(start = 15.dp),
+                )
+                Spacer(Modifier.height(5.dp))
+                SuggestionEngine.entries.forEach { suggestionEngine ->
+                    if (Platform.onAndroid && suggestionEngine == SuggestionEngine.LanguageTool) return@forEach
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable(indication = null, interactionSource = null, onClick = {
+                                    LimaePreferences.toggleOptedEngine(suggestionEngine)
+                                })
+                                .showHandOnHover(),
+                    ) {
+                        Checkbox(
+                            checked = LimaePreferences.optedEngines.contains(suggestionEngine),
+                            onCheckedChange = {
+                                LimaePreferences.toggleOptedEngine(suggestionEngine)
+                            },
+                        )
+                        Text(
+                            text = suggestionEngine.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontSize = 16.sp,
+                        )
+                    }
+                }
             }
             if (onAndroid) {
                 item {

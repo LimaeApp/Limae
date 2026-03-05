@@ -1,6 +1,7 @@
 package com.sakethh.limae.utils
 
 object Constants {
+    const val APP_VERSION_NAME = "v0.1.0"
     const val DATABASE_NAME = "limae.db"
     const val DATA_STORE_PREF_NAME = "limae.preferences_pb"
 

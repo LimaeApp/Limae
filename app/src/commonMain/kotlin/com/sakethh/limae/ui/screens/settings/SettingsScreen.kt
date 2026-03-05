@@ -18,6 +18,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -42,6 +44,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -70,8 +73,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -84,13 +92,17 @@ import com.sakethh.limae.ui.LimaeAction
 import com.sakethh.limae.ui.common.ConfirmationDialog
 import com.sakethh.limae.ui.common.ItemState
 import com.sakethh.limae.ui.common.showHandOnHover
+import com.sakethh.limae.utils.Constants
 import com.sakethh.limae.utils.LimaePreferences
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import limae.app.generated.resources.Res
+import limae.app.generated.resources.discord
+import limae.app.generated.resources.github
 import limae.app.generated.resources.secretary_bird_webp
+import limae.app.generated.resources.twitter
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -195,6 +207,7 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
 
     val exportedPathComponentSpace = if (isExportPathPicked) 15.dp else 0.dp
 
+    val localUriHandler = LocalUriHandler.current
     Scaffold(topBar = {
         LargeTopAppBar(title = {
             Text(
@@ -220,6 +233,169 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
                     .fillMaxSize()
                     .nestedScroll(topAppBarScrollBehaviour.nestedScrollConnection),
         ) {
+            item {
+                Column(
+                    modifier =
+                        Modifier
+                            .padding(
+                                start = 15.dp,
+                                end = 15.dp,
+                                top = 15.dp,
+                                bottom = 7.5.dp,
+                            ).clip(
+                                RoundedCornerShape(15.dp),
+                            ).fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .padding(top = 7.5.dp),
+                ) {
+                    AppVersionLabel()
+                    Row(
+                        modifier = Modifier.padding(start = 10.dp, top = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        FilledIconButton(
+                            modifier =
+                                Modifier
+                                    .pointerHoverIcon(icon = PointerIcon.Hand),
+                            onClick = {
+                                localUriHandler.openUri("https://www.github.com/LimaeApp")
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.github),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                        FilledIconButton(
+                            modifier =
+                                Modifier
+                                    .pointerHoverIcon(icon = PointerIcon.Hand),
+                            onClick = {
+                                localUriHandler.openUri("https://discord.gg/ZDBXNtv8MD")
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.discord),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                        FilledIconButton(
+                            modifier =
+                                Modifier
+                                    .pointerHoverIcon(icon = PointerIcon.Hand),
+                            onClick = {
+                                localUriHandler.openUri("https://www.twitter.com/LimaeApp")
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.twitter),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    }
+
+                    Column(
+                        modifier =
+                            Modifier
+                                .padding(7.5.dp)
+                                .clip(RoundedCornerShape(25.dp))
+                                .background(MaterialTheme.colorScheme.onSecondary)
+                                .fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(15.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.secretary_bird_webp),
+                                contentDescription = null,
+                                modifier =
+                                    Modifier.size(65.dp).clip(CircleShape).border(
+                                        width = 1.5.dp,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        shape = CircleShape,
+                                    ),
+                            )
+                            Spacer(Modifier.width(15.dp))
+                            Text(
+                                text = "Limae's mascot, the Secretary Bird, is an artwork by Maxime Budar.",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.secondary,
+                            )
+                        }
+                        Spacer(Modifier.height(2.5.dp))
+                        Button(
+                            colors =
+                                ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiary,
+                                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                                ),
+                            modifier =
+                                Modifier
+                                    .padding(start = 15.dp, end = 15.dp, bottom = 15.dp)
+                                    .fillMaxWidth()
+                                    .showHandOnHover(),
+                            onClick = {
+                                localUriHandler.openUri("https://www.artstation.com/maximebudar")
+                            },
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.OpenInNew,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(Modifier.width(2.5.dp))
+                                Text(
+                                    text = "Maxime on ArtStation",
+                                    style = MaterialTheme.typography.titleSmall,
+                                )
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            localUriHandler.openUri("https://ko-fi.com/sakethpathike")
+                        },
+                        modifier =
+                            Modifier
+                                .pointerHoverIcon(icon = PointerIcon.Hand)
+                                .padding(start = 15.dp, end = 15.dp),
+                    ) {
+                        Icon(imageVector = Icons.FilledCoffee, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.5.dp))
+                        Text(
+                            text = "Buy me a Coffee",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 16.5.sp,
+                        )
+                    }
+                    /*Button(
+                        onClick = {
+                            uriHandler.openUri("https://play.google.com/store/apps/details?id=com.sakethh.linkora")
+                        },
+                        modifier =
+                            Modifier
+                                .pointerHoverIcon(icon = PointerIcon.Hand)
+                                .padding(start = 15.dp, bottom = 15.dp)
+                                .pressScaleEffect(),
+                    ) {
+                        Icon(imageVector = Icons.Default.RateReview, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.5.dp))
+                        Text(
+                            text = Localization.Key.RateOnPlayLabel.rememberLocalizedString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 16.5.sp,
+                        )
+                    }*/
+                    Spacer(Modifier.height(15.dp))
+                }
+            }
             item {
                 Text(
                     text = "Theme",
@@ -1051,5 +1227,48 @@ fun SettingsScreen(performAction: (LimaeAction) -> Unit) {
         LaunchedEffect(Unit) {
             newCustomStringInDictBtmSheetFocus.requestFocus()
         }
+    }
+}
+
+@Composable
+fun ItemDivider(
+    colorOpacity: Float = 0.35f,
+    thickness: Dp = 1.5.dp,
+    paddingValues: PaddingValues =
+        PaddingValues(
+            top = 15.dp,
+            start = 20.dp,
+            end = if (platform.type == Platform.Type.AndroidMobile) 20.dp else 5.dp,
+        ),
+    color: Color = MaterialTheme.colorScheme.outline,
+) {
+    HorizontalDivider(
+        modifier =
+            Modifier
+                .padding(
+                    paddingValues,
+                ).clip(RoundedCornerShape(25.dp)),
+        thickness = thickness,
+        color = color.copy(colorOpacity),
+    )
+}
+
+@Composable
+fun AppVersionLabel(modifier: Modifier = Modifier.padding(top = 7.5.dp, start = 15.dp)) {
+    Row(modifier) {
+        Text(
+            text = "Limae",
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 22.sp,
+            modifier = Modifier.alignByBaseline(),
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        Text(
+            text = Constants.APP_VERSION_NAME,
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 12.5.sp,
+            modifier = Modifier.alignByBaseline().padding(start = 2.5.dp),
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }

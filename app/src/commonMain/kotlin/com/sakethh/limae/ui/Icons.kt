@@ -60,6 +60,67 @@ object Icons {
     @Suppress("ObjectPropertyName")
     private var _OpenInNew: ImageVector? = null
 
+    val FilledCoffee: ImageVector
+        get() {
+            if (_FilledCoffee != null) {
+                return _FilledCoffee!!
+            }
+            _FilledCoffee =
+                ImageVector
+                    .Builder(
+                        name = "FilledCoffee",
+                        defaultWidth = 24.dp,
+                        defaultHeight = 24.dp,
+                        viewportWidth = 960f,
+                        viewportHeight = 960f,
+                    ).apply {
+                        path(fill = SolidColor(Color(0xFFE3E3E3))) {
+                            moveTo(440f, 720f)
+                            quadToRelative(-117f, 0f, -198.5f, -81.5f)
+                            reflectiveQuadTo(160f, 440f)
+                            verticalLineToRelative(-240f)
+                            quadToRelative(0f, -33f, 23.5f, -56.5f)
+                            reflectiveQuadTo(240f, 120f)
+                            horizontalLineToRelative(500f)
+                            quadToRelative(58f, 0f, 99f, 41f)
+                            reflectiveQuadToRelative(41f, 99f)
+                            quadToRelative(0f, 58f, -41f, 99f)
+                            reflectiveQuadToRelative(-99f, 41f)
+                            horizontalLineToRelative(-20f)
+                            verticalLineToRelative(40f)
+                            quadToRelative(0f, 117f, -81.5f, 198.5f)
+                            reflectiveQuadTo(440f, 720f)
+                            close()
+                            moveTo(240f, 320f)
+                            horizontalLineToRelative(400f)
+                            verticalLineToRelative(-120f)
+                            lineTo(240f, 200f)
+                            verticalLineToRelative(120f)
+                            close()
+                            moveTo(720f, 320f)
+                            horizontalLineToRelative(20f)
+                            quadToRelative(25f, 0f, 42.5f, -17.5f)
+                            reflectiveQuadTo(800f, 260f)
+                            quadToRelative(0f, -25f, -17.5f, -42.5f)
+                            reflectiveQuadTo(740f, 200f)
+                            horizontalLineToRelative(-20f)
+                            verticalLineToRelative(120f)
+                            close()
+                            moveTo(160f, 840f)
+                            verticalLineToRelative(-80f)
+                            horizontalLineToRelative(640f)
+                            verticalLineToRelative(80f)
+                            lineTo(160f, 840f)
+                            close()
+                        }
+                    }.build()
+
+            return _FilledCoffee!!
+        }
+
+    @Suppress("ObjectPropertyName")
+    private var _FilledCoffee: ImageVector? = null
+
     val DataObject: ImageVector
         get() {
             if (_DataObject != null) {

@@ -62,7 +62,7 @@ fun SuggestionsList(
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.fillMaxWidth(0.75f).padding(start = 5.dp),
                         )
-                        FilledTonalIconButton(
+                        /*FilledTonalIconButton(
                             enabled = !suggestions.isEmpty(),
                             modifier = Modifier.showHandOnHover(),
                             onClick = onAcceptAll,
@@ -71,7 +71,7 @@ fun SuggestionsList(
                                 imageVector = Icons.DoneAll,
                                 contentDescription = "Apply all the edits",
                             )
-                        }
+                        }*/
                     }
                     HorizontalDivider(
                         modifier = Modifier.padding(bottom = 5.dp).fillMaxWidth(),

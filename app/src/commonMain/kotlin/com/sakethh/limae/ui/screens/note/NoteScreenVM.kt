@@ -177,11 +177,82 @@ class NoteScreenVM(
             }
 
             is NoteScreenAction.AcceptAllSuggestions -> {
+                /*
+                While this was originally planned and I have implemented it, I came
+                to the conclusion that this needs more "study":
+                1. Applying all suggestions is a guess game and does not imply what the
+                user is actually expecting.
+                2. Harper/LanguageTool might provide multiple suggestions within the
+                same index boundary; now predicting what to apply is kind of simple using
+                priority-based implementation to know what to swap and what not, but the
+                problem is we are never sure about that priority; it doesn't really fix it
+                in all cases.
+                3. The best solution is LSP-like, which doesn't touch anything that is in
+                those overlapping indices.
+
+                Will skip this for now; if anyone raises the issue, then will see how
+                it goes. Until then, adios.
+                 * */
+
+                return
                 if (pauseSuggestions.isLocked) return
 
                 viewModelScope.launch {
                     pauseSuggestions.withLock {
-                        TODO()
+                        val rawText =
+                            if (currentActiveTextField == ActiveTextField.Title) {
+                                note.title
+                            } else {
+                                note.content
+                            }
+                        val seenIndexes = mutableSetOf<Int>()
+                        val filteredSuggestions =
+                            suggestions.value.data
+                                .filter {
+                                    val currentRange =
+                                        it.suggestion.startIndex until it.suggestion.endIndex
+
+                                    if (currentRange
+                                            .any {
+                                                it in seenIndexes
+                                            }
+                                    ) {
+                                        return@filter false
+                                    }
+                                    seenIndexes.addAll(currentRange)
+                                }.sortedBy {
+                                    it.suggestion.startIndex
+                                }
+                        var currIndex = 0
+                        val updatedString = StringBuilder()
+                        for (suggestionBundle in filteredSuggestions) {
+                            val currStartIndex = suggestionBundle.suggestion.startIndex
+                            val currEndIndex = suggestionBundle.suggestion.endIndex
+                            if (currIndex < currStartIndex) {
+                                updatedString.append(
+                                    rawText.substring(currIndex until currStartIndex),
+                                )
+                            }
+                            updatedString.append(
+                                getSuggestionValue(
+                                    suggestion = suggestionBundle.suggestion.suggestions.first(),
+                                    engine = suggestionBundle.engine,
+                                ),
+                            )
+                            currIndex = currEndIndex
+                        }
+                        if (currIndex < rawText.length) {
+                            updatedString.append(
+                                rawText.substring(currIndex),
+                            )
+                        }
+                        note =
+                            if (currentActiveTextField == ActiveTextField.Title) {
+                                note
+                                    .copy(title = updatedString.toString())
+                            } else {
+                                note.copy(content = updatedString.toString())
+                            }
                     }
                 }
             }
